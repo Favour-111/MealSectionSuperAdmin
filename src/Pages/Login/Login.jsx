@@ -25,7 +25,7 @@ const Login = () => {
           className="md:w-[300px] w-[200px] md:h-[300px] h-[200px]"
         />
       </div>
-      <div className="flex-1 md:mt-[90px] flex flex-col items-center justify-between md:h-[100vh] h-[350px] w-[100%] md:w-[50%] rounded-4xl mt-[-40px] bg-white">
+      <div className="flex-1 md:mt-[90px] flex flex-col items-center justify-between md:h-[80vh] h-[350px] w-[100%] md:w-[50%] rounded-4xl mt-[-40px] bg-white">
         <div className="flex-1 md:flex items-center justify-center hidden">
           <img
             src="https://favour-111.github.io/MEalSection-ComongSoon-2.0/WhatsApp%20Image%202024-08-24%20at%2020.18.12_988ce6f9.jpg"
@@ -34,7 +34,7 @@ const Login = () => {
           />
         </div>
 
-        <div className="flex-20 w-[100%] md:px-20 px-10 flex items-center gap-2 flex-col  mt-[50px]">
+        <div className="flex-10 w-[100%] md:px-20 px-10 flex items-center gap-2 flex-col  mt-[50px]">
           <div className="w-[100%]">
             <label htmlFor="" className="font-medium text-[13px]">
               Email or Phone
