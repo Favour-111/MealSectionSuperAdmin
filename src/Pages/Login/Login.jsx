@@ -18,14 +18,14 @@ const Login = () => {
   };
   return (
     <div className="md:flex block">
-      <div className="md:w-[50%] w-[100%] md:h-[100vh] sm:h-[600px] h-[550px] bg-[var(--default)] grid place-items-center">
+      <div className="md:w-[50%] w-[100%] md:h-[100vh] sm:h-[600px] h-[450px] bg-[var(--default)] grid place-items-center">
         <img
           src="https://png.pngtree.com/png-vector/20221219/ourmid/pngtree-delivery-boy-with-food-png-image_6528630.png"
           alt=""
           className="md:w-[300px] w-[200px] md:h-[300px] h-[200px]"
         />
       </div>
-      <div className="flex-1 md:mt-[90px] flex flex-col items-center justify-between md:h-[100vh] h-[500px] w-[100%] md:w-[50%] rounded-4xl mt-[-40px] bg-white">
+      <div className="flex-1 md:mt-[90px] flex flex-col items-center justify-between md:h-[100vh] h-[350px] w-[100%] md:w-[50%] rounded-4xl mt-[-40px] bg-white">
         <div className="flex-1 md:flex items-center justify-center hidden">
           <img
             src="https://favour-111.github.io/MEalSection-ComongSoon-2.0/WhatsApp%20Image%202024-08-24%20at%2020.18.12_988ce6f9.jpg"
