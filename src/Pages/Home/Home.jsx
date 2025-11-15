@@ -8,15 +8,27 @@ import {
   IoMenu,
   IoPhoneLandscapeOutline,
 } from "react-icons/io5";
+import { FaRegBuilding } from "react-icons/fa6";
 import { SlBell } from "react-icons/sl";
 import { MdOutlineContentPasteSearch } from "react-icons/md";
 import { FaRegMoneyBillAlt } from "react-icons/fa";
 import LineChart from "../../components/LineChart/LineChart";
 import BarChart from "../../components/BarChat/BarChart";
+import { useAppContext } from "../../components/AppContext";
+import "./Home.css";
 const Home = () => {
   const [openNav, setOpenNav] = useState(false);
+  const { Universities, allOrder } = useAppContext();
+  console.log(allOrder);
+
+  const success = allOrder.filter((item) => item.currentStatus === "Delivered");
+  const pending = allOrder.filter((item) => item.currentStatus === "Pending");
+  const cancelled = allOrder.filter(
+    (item) => item.currentStatus === "Cancelled"
+  );
+
   return (
-    <div className="flex w-[100%] justify-between">
+    <div className="flex w-[100%] justify-between min-h-screen bg-gradient-to-br from-slate-50 via-white to-purple-50/30">
       {openNav && (
         <div
           className="fixed inset-0 bg-black/40 z-40 md:hidden"
@@ -36,110 +48,119 @@ const Home = () => {
       </div>
 
       <div className="flex-1 md:ml-[240px] w-full min-h-screen overflow-y-auto">
-        <div className="md:p-4 px-5 mt-3">
-          <div className="flex items-center justify-between">
-            <div className="flex gap-5 items-center">
-              <div
-                className="md:hidden flex bg-[#f6f6f6] rounded-[10px] p-2 cursor-pointer"
+        <div className="md:p-6 px-5 mt-3 pb-10">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex gap-4 items-center">
+              <button
+                className="md:hidden flex bg-white/80 backdrop-blur-sm border border-gray-200 rounded-xl p-3 cursor-pointer hover:bg-white transition-all shadow-sm"
                 onClick={() => setOpenNav(true)}
               >
-                <IoMenu size={23} />
+                <IoMenu size={18} className="text-gray-700" />
+              </button>
+              <div>
+                <h1 className="font-bold text-2xl bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
+                  Global Overview
+                </h1>
+                <p className="text-sm text-gray-500 mt-1">
+                  Monitor platform metrics and university activity
+                </p>
               </div>
-              <h1 className="font-medium text-xl">Global OverView</h1>
             </div>
-            {/* <div className="bg-gray-300 w-fit p-2 rounded-4xl">
-              <SlBell size={20} />
-            </div> */}
+            <button className="bg-white/80 backdrop-blur-sm border border-gray-200 w-fit p-3 rounded-xl hover:bg-white transition-all shadow-sm group">
+              <SlBell
+                size={16}
+                className="text-gray-600 group-hover:text-purple-500 transition-colors"
+              />
+            </button>
           </div>
 
-          <div className="flex  flex-wrap gap-5 items-center">
-            <div className="flex justify-between gap-3 mt-3 p-4  h-30 bg-green-100 items-center rounded-2xl md:w-[23%] w-[100%]  sm:w-[48%]">
-              <div>
-                <h1 className="font-[400] text-[14px]">Successful order</h1>
-                <h1 className="font-[600] text-green-600 text-[20px]">100</h1>
-                <div className="font-[13px] font-[400]">Orders</div>
-              </div>
-              <div className="bg-green-400 p-3 rounded-4xl">
-                <IoCheckmark size={20} />
-              </div>
-            </div>
-            <div className="flex justify-between gap-3 mt-3 p-4  h-30 bg-amber-100 items-center rounded-2xl md:w-[23%] w-[100%] w-[48%]">
-              <div>
-                <h1 className="font-[400] text-[14px]">Ongoing order</h1>
-                <h1 className="font-[600] text-amber-600 text-[20px]">100</h1>
-                <div className="font-[13px] font-[400]">Orders</div>
-              </div>
-              <div className="bg-amber-400 p-3 rounded-4xl">
-                <MdOutlineContentPasteSearch size={20} />
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-6">
+            <div className="group relative overflow-hidden p-5 rounded-2xl bg-gradient-to-br from-emerald-500 to-green-600 text-white shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/30 transition-all hover:-translate-y-1">
+              <div className="absolute top-0 right-0 w-20 h-20 bg-white/10 rounded-full -mr-10 -mt-10" />
+              <div className="relative z-10">
+                <div className="flex items-center justify-between mb-3">
+                  <p className="text-sm font-medium text-white/90">
+                    Successful Orders
+                  </p>
+                  <div className="bg-white/20 backdrop-blur-sm p-2.5 rounded-xl">
+                    <IoCheckmark size={20} className="text-white" />
+                  </div>
+                </div>
+                <p className="text-3xl font-bold">{success.length}</p>
+                <p className="text-xs text-white/80 mt-1">Delivered</p>
               </div>
             </div>
-            <div className="flex justify-between gap-3 mt-3 p-4  h-30 bg-red-100 items-center rounded-2xl md:w-[23%] w-[100%] w-[48%]">
-              <div>
-                <h1 className="font-[400] text-[14px]">Cancelled order</h1>
-                <h1 className="font-[600] text-red-600 text-[20px]">100</h1>
-                <div className="font-[13px] font-[400]">Orders</div>
-              </div>
-              <div className="bg-red-400 p-3 rounded-4xl">
-                <IoClose size={20} />
-              </div>
-            </div>
-            <div className="flex justify-between gap-3 mt-3 p-4  h-30 bg-purple-100 items-center rounded-2xl md:w-[23%] w-[100%] w-[48%]">
-              <div>
-                <h1 className="font-[400] text-[14px]">Total Revenue</h1>
-                <h1 className="font-[600] text-purple-600 text-[20px]">
-                  30,000
-                </h1>
-              </div>
-              <div className="bg-purple-400 p-3 rounded-4xl">
-                <FaRegMoneyBillAlt size={20} />
+            <div className="group relative overflow-hidden p-5 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-500 text-white shadow-lg shadow-amber-500/20 hover:shadow-amber-500/30 transition-all hover:-translate-y-1">
+              <div className="absolute top-0 right-0 w-20 h-20 bg-white/10 rounded-full -mr-10 -mt-10" />
+              <div className="relative z-10">
+                <div className="flex items-center justify-between mb-3">
+                  <p className="text-sm font-medium text-white/90">
+                    Ongoing Orders
+                  </p>
+                  <div className="bg-white/20 backdrop-blur-sm p-2.5 rounded-xl">
+                    <MdOutlineContentPasteSearch
+                      size={20}
+                      className="text-white"
+                    />
+                  </div>
+                </div>
+                <p className="text-3xl font-bold">{pending.length}</p>
+                <p className="text-xs text-white/80 mt-1">In Progress</p>
               </div>
             </div>
-          </div>
-          <div className="mt-10">
-            <h1 className="fw-[500] text-[15px]">Active Universities</h1>
-          </div>
-          <div className="grid md:grid-cols-4 grid-cols-2 items-center gap-5">
-            <div className="flex justify-between gap-3 mt-3 p-4 h-20 bg-[#f1f1f1] shadow-sm items-center rounded-2xl ">
-              <div className="">
-                <h1 className="font-[500] text-[15px] text-center text-black w-[100%]">
-                  Crawford University
-                </h1>
-              </div>
-            </div>
-
-            <div className="flex justify-between gap-3 mt-3 p-4 h-20 bg-[#f1f1f1] shadow-sm items-center rounded-2xl ">
-              <div className="w-[100%]">
-                <h1 className="font-[500] text-[15px] text-center text-black w-[100%]">
-                  Bells University
-                </h1>
-              </div>
-            </div>
-
-            <div className="flex justify-between gap-3 mt-3 p-4 h-20 bg-[#f1f1f1] shadow-sm items-center rounded-2xl ">
-              <div className="w-[100%]">
-                <h1 className="font-[500] text-[15px] text-center text-black w-[100%]">
-                  Chrisland University
-                </h1>
-              </div>
-            </div>
-
-            <div className="flex justify-between gap-3 mt-3 p-4 h-20 bg-[#f1f1f1] shadow-sm items-center rounded-2xl ">
-              <div className="w-[100%]">
-                <h1 className="font-[500] text-[15px] text-center text-black w-[100%]">
-                  Covenant University
-                </h1>
+            <div className="group relative overflow-hidden p-5 rounded-2xl bg-gradient-to-br from-rose-500 to-red-600 text-white shadow-lg shadow-red-500/20 hover:shadow-red-500/30 transition-all hover:-translate-y-1">
+              <div className="absolute top-0 right-0 w-20 h-20 bg-white/10 rounded-full -mr-10 -mt-10" />
+              <div className="relative z-10">
+                <div className="flex items-center justify-between mb-3">
+                  <p className="text-sm font-medium text-white/90">
+                    Cancelled Orders
+                  </p>
+                  <div className="bg-white/20 backdrop-blur-sm p-2.5 rounded-xl">
+                    <IoClose size={20} className="text-white" />
+                  </div>
+                </div>
+                <p className="text-3xl font-bold">{cancelled.length}</p>
+                <p className="text-xs text-white/80 mt-1">Declined</p>
               </div>
             </div>
           </div>
-          <div className="md:flex md:justify-between block mt-10">
-            <div className="md:w-[45%] w-[100%] ">
-              <div className="font-bold text-2xl">Total Revenue</div>
+          <div className="mt-7 mb-4">
+            <h2 className="font-bold text-lg text-gray-900 flex items-center gap-2">
+              <div className="w-1 h-5 bg-blue-500 rounded-full" />
+              Active Universities
+            </h2>
+            <p className="text-sm text-gray-500 mt-1">
+              {Universities.length} registered institutions
+            </p>
+          </div>
+          <div className="grid md:grid-cols-4 grid-cols-2 gap-4 mb-8">
+            {Universities.map((item, idx) => (
+              <div
+                key={idx}
+                className="flex gap-3 p-4 bg-white/80 backdrop-blur-sm border border-gray-100 shadow-sm hover:shadow-md items-center rounded-xl transition-all hover:-translate-y-0.5 group"
+              >
+                <div className="bg-gradient-to-br from-blue-500 to-violet-600 p-3 rounded-lg text-white shadow-sm">
+                  <FaRegBuilding size={18} />
+                </div>
+                <h3 className="font-semibold text-sm text-gray-900 group-hover:text-blue-600 transition-colors">
+                  {item.name}
+                </h3>
+              </div>
+            ))}
+          </div>
+          <div className="grid md:grid-cols-2 gap-6 mt-8">
+            <div className="bg-white/80 backdrop-blur-sm border border-gray-100 rounded-2xl p-5 shadow-sm hover:shadow-md transition-all">
+              <h2 className="font-bold text-lg text-gray-900 mb-4">
+                Total Revenue
+              </h2>
               <div>
                 <LineChart />
               </div>
             </div>
-            <div className="md:w-[45%] w-[100%]">
-              <div className="font-bold text-2xl">Customer map Weekly</div>
+            <div className="bg-white/80 backdrop-blur-sm border border-gray-100 rounded-2xl p-5 shadow-sm hover:shadow-md transition-all">
+              <h2 className="font-bold text-lg text-gray-900 mb-4">
+                Customer Map Weekly
+              </h2>
               <div>
                 <BarChart />
               </div>

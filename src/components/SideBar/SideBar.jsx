@@ -7,6 +7,7 @@ import { useNavigate } from "react-router-dom";
 import { BsBank } from "react-icons/bs";
 import { IoGiftOutline, IoWalletOutline } from "react-icons/io5";
 import { FiSettings } from "react-icons/fi";
+import { CiLogout } from "react-icons/ci";
 const SideBar = ({ setOpenNav }) => {
   const pathToItem = {
     "/home": "home",
@@ -20,7 +21,7 @@ const SideBar = ({ setOpenNav }) => {
   const navigate = useNavigate();
 
   return (
-    <div className="h-screen bg-white shadow-2xl w-full overflow-y-auto">
+    <div className="h-screen w-full overflow-y-auto bg-white/80 backdrop-blur-xl border-r border-gray-100 shadow-xl">
       <div className="flex items-center justify-between p-3">
         <img
           src="https://favour-111.github.io/MEalSection-ComongSoon-2.0/WhatsApp%20Image%202024-08-24%20at%2020.18.12_988ce6f9.jpg"
@@ -43,10 +44,10 @@ const SideBar = ({ setOpenNav }) => {
           onClick={() => {
             navigate("/home");
           }}
-          className={`flex items-center gap-2 h-10 cursor-pointer w-full p-3 ${
+          className={`flex items-center gap-3 h-11 cursor-pointer w-full px-4 rounded-lg mx-2 my-1 transition-all ${
             selectedItem === "home"
-              ? "bg-[var(--defaultLight)] border-r-4 border-[var(--default)]"
-              : "bg-transparent"
+              ? "bg-indigo-50 text-indigo-700"
+              : "text-gray-700 hover:bg-gray-50"
           } `}
         >
           <GrAppsRounded />
@@ -56,12 +57,11 @@ const SideBar = ({ setOpenNav }) => {
         <div
           onClick={() => {
             navigate("/order");
-            setSelectedItem("order");
           }}
-          className={`flex items-center gap-2 h-10 cursor-pointer w-full p-3 ${
+          className={`flex items-center gap-3 h-11 cursor-pointer w-full px-4 rounded-lg mx-2 my-1 transition-all ${
             selectedItem === "order"
-              ? "bg-[var(--defaultLight)] border-r-4 border-[var(--default)]"
-              : "bg-transparent"
+              ? "bg-indigo-50 text-indigo-700"
+              : "text-gray-700 hover:bg-gray-50"
           } `}
         >
           <LuNewspaper />
@@ -72,10 +72,10 @@ const SideBar = ({ setOpenNav }) => {
           onClick={() => {
             navigate("/universities");
           }}
-          className={`flex items-center gap-2 h-10 cursor-pointer w-full p-3 ${
+          className={`flex items-center gap-3 h-11 cursor-pointer w-full px-4 rounded-lg mx-2 my-1 transition-all ${
             selectedItem === "universities"
-              ? "bg-[var(--defaultLight)] border-r-4 border-[var(--default)]"
-              : "bg-transparent"
+              ? "bg-indigo-50 text-indigo-700"
+              : "text-gray-700 hover:bg-gray-50"
           } `}
         >
           <BsBank />
@@ -85,10 +85,10 @@ const SideBar = ({ setOpenNav }) => {
           onClick={() => {
             navigate("/withdraw");
           }}
-          className={`flex items-center gap-2 h-10 cursor-pointer w-full p-3 ${
+          className={`flex items-center gap-3 h-11 cursor-pointer w-full px-4 rounded-lg mx-2 my-1 transition-all ${
             selectedItem === "withdraw"
-              ? "bg-[var(--defaultLight)] border-r-4 border-[var(--default)]"
-              : "bg-transparent"
+              ? "bg-indigo-50 text-indigo-700"
+              : "text-gray-700 hover:bg-gray-50"
           } `}
         >
           <IoWalletOutline />
@@ -98,10 +98,10 @@ const SideBar = ({ setOpenNav }) => {
           onClick={() => {
             navigate("/promotion");
           }}
-          className={`flex items-center gap-2 h-10 cursor-pointer w-full p-3 ${
+          className={`flex items-center gap-3 h-11 cursor-pointer w-full px-4 rounded-lg mx-2 my-1 transition-all ${
             selectedItem === "promotion"
-              ? "bg-[var(--defaultLight)] border-r-4 border-[var(--default)]"
-              : "bg-transparent"
+              ? "bg-indigo-50 text-indigo-700"
+              : "text-gray-700 hover:bg-gray-50"
           } `}
         >
           <IoGiftOutline />
@@ -111,14 +111,24 @@ const SideBar = ({ setOpenNav }) => {
           onClick={() => {
             navigate("/fee");
           }}
-          className={`flex items-center gap-2 h-10 cursor-pointer w-full p-3 ${
+          className={`flex items-center gap-3 h-11 cursor-pointer w-full px-4 rounded-lg mx-2 my-1 transition-all ${
             selectedItem === "fee"
-              ? "bg-[var(--defaultLight)] border-r-4 border-[var(--default)]"
-              : "bg-transparent"
+              ? "bg-indigo-50 text-indigo-700"
+              : "text-gray-700 hover:bg-gray-50"
           } `}
         >
           <FiSettings />
           <div className="text-[13px]">Fee settings</div>
+        </div>
+        <div
+          onClick={() => {
+            localStorage.clear();
+            window.location.replace("/");
+          }}
+          className="absolute bottom-0 left-0 right-0 flex justify-center text-red-600 bg-red-50 hover:bg-red-100 items-center gap-2 h-11 cursor-pointer w-full px-4"
+        >
+          <CiLogout />
+          <div className="text-[13px]">Sign Out</div>
         </div>
       </div>
     </div>

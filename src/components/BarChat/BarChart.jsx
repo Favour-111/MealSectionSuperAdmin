@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo, useRef } from "react";
 import { Bar } from "react-chartjs-2";
 import {
   Chart as ChartJS,
@@ -20,61 +20,99 @@ ChartJS.register(
   Legend
 );
 
-const BarChart = () => {
-  // Data for the bar chart
+const dayLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+const BarChart = ({ filteredOrders = [], title = "Weekly Overview" }) => {
+  const chartRef = useRef(null);
+
+  // Derive weekly counts from filteredOrders if provided
+  const { labels, values } = useMemo(() => {
+    if (!Array.isArray(filteredOrders) || filteredOrders.length === 0) {
+      return {
+        labels: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+        values: [45, 25, 65, 50, 85, 95, 55],
+      };
+    }
+    const counts = { Mon: 0, Tue: 0, Wed: 0, Thu: 0, Fri: 0, Sat: 0, Sun: 0 };
+    filteredOrders.forEach((o) => {
+      const d = o?.createdAt ? new Date(o.createdAt) : null;
+      if (!d || isNaN(d)) return;
+      const label = dayLabels[d.getDay()];
+      counts[label] = (counts[label] || 0) + 1;
+    });
+    const ordered = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+    return { labels: ordered, values: ordered.map((k) => counts[k] || 0) };
+  }, [filteredOrders]);
+
+  const gradientBg = (context) => {
+    const chart = context.chart || chartRef.current;
+    const { ctx, chartArea } = chart || {};
+    if (!ctx || !chartArea) return "rgba(99, 102, 241, 0.3)"; // fallback indigo-500/30
+    const gradient = ctx.createLinearGradient(
+      0,
+      chartArea.top,
+      0,
+      chartArea.bottom
+    );
+    gradient.addColorStop(0, "rgba(99, 102, 241, 0.9)"); // indigo-500
+    gradient.addColorStop(1, "rgba(99, 102, 241, 0.2)");
+    return gradient;
+  };
+
   const data = {
-    labels: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"], // Days of the week
+    labels,
     datasets: [
       {
-        label: "Sales ($)", // Label for the dataset
-        data: [45, 25, 65, 50, 85, 95, 55], // Sales data for each day
-        backgroundColor: "rgba(75, 192, 192, 0.6)", // Bar color (light green)
-        borderColor: "rgba(75, 192, 192, 1)", // Border color (dark green)
-        borderWidth: 1, // Border width
+        label: "Orders",
+        data: values,
+        backgroundColor: (ctx) => gradientBg(ctx),
+        borderColor: "rgba(99, 102, 241, 1)",
+        borderWidth: 1,
+        borderRadius: 8,
+        borderSkipped: false,
+        barPercentage: 0.6,
+        categoryPercentage: 0.6,
       },
     ],
   };
 
-  // Options for the chart (customizing axes and appearance)
   const options = {
-    responsive: true, // Make the chart responsive
+    responsive: true,
+    maintainAspectRatio: false,
     scales: {
       x: {
-        beginAtZero: true,
-        grid: {
-          display: false, // Disable grid lines on the y-axis
-        },
+        grid: { display: false, drawBorder: false },
+        ticks: { color: "#64748b", font: { size: 11 } },
       },
       y: {
         beginAtZero: true,
-        ticks: {
-          callback: function (value) {
-            return "$" + value; // Format Y-axis labels with "$"
-          },
-        },
-        grid: {
-          display: false, // Disable grid lines on the y-axis
-        },
+        grid: { color: "rgba(0,0,0,0.06)", drawBorder: false },
+        ticks: { color: "#64748b", font: { size: 11 }, precision: 0 },
       },
     },
     plugins: {
-      legend: {
-        position: "top", // Position the legend at the top
-      },
+      legend: { display: false },
       tooltip: {
+        backgroundColor: "rgba(255,255,255,0.95)",
+        titleColor: "#0f172a",
+        bodyColor: "#0f172a",
+        borderColor: "#e2e8f0",
+        borderWidth: 1,
+        padding: 10,
+        displayColors: false,
         callbacks: {
-          label: function (tooltipItem) {
-            return "$" + tooltipItem.raw; // Format tooltips with "$"
-          },
+          label: (ctx) => `${ctx.parsed.y} orders`,
         },
       },
     },
+    animation: { duration: 600, easing: "easeOutQuart" },
   };
 
   return (
-    <div className="mt-10">
-      <div className="chart-container">
-        <Bar data={data} options={options} />
+    <div className="mt-6 bg-white/80 backdrop-blur-sm rounded-2xl p-4 shadow-sm border border-gray-100">
+      <div className="font-semibold text-gray-900 mb-2">{title}</div>
+      <div className="h-64">
+        <Bar ref={chartRef} data={data} options={options} />
       </div>
     </div>
   );

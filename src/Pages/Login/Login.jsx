@@ -12,7 +12,7 @@ const Login = () => {
     setLogin({ ...login, [name]: value });
   };
   const submitForm = () => {
-    if (login.email === "admin@gmail.com" || login.password === 123) {
+    if (login.email === "admin@gmail.com" || login.password === "awhanaAdmin") {
       navigate("/home");
     }
   };

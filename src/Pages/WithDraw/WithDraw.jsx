@@ -1,15 +1,152 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import SideBar from "../../components/SideBar/SideBar";
-import { IoCheckmark, IoClose, IoMenu } from "react-icons/io5";
+import { IoMenu, IoCheckmark, IoClose } from "react-icons/io5";
 import { SlBell } from "react-icons/sl";
-import { FaRegMoneyBillAlt } from "react-icons/fa";
-import { GoPackage } from "react-icons/go";
-import { MdOutlineContentPasteSearch } from "react-icons/md";
-import { GiMoneyStack } from "react-icons/gi";
+import { MdPending, MdAttachMoney } from "react-icons/md";
+import { FiClock } from "react-icons/fi";
+import axios from "axios";
+import { toast } from "react-hot-toast";
+import "../Home/Home.css";
+import { CardsSkeleton } from "../../components/ui/Skeleton";
+
 const WithDraw = () => {
   const [openNav, setOpenNav] = useState(false);
+  const [withdrawals, setWithdrawals] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [pendingPage, setPendingPage] = useState(1);
+  const [historyPage, setHistoryPage] = useState(1);
+  const itemsPerPage = 10;
+
+  const API = import.meta.env.VITE_REACT_APP_API;
+
+  // 🟢 Fetch both Rider and Vendor withdrawals
+  useEffect(() => {
+    const fetchWithdrawals = async () => {
+      setLoading(true);
+      try {
+        const [riderRes, vendorRes] = await Promise.all([
+          axios.get(`${API}/api/riders/withdraw`),
+          axios.get(`${API}/api/vendors/withdrawals`),
+        ]);
+
+        // Normalize both data sources
+        const riderData = riderRes.data.map((r) => ({
+          _id: r._id,
+          initiator: r.riderName || "Unknown Rider",
+          role: "Rider",
+          amount: r.amount,
+          status: r.status, // could be true, false, or null
+          date: new Date(r.date || r.createdAt).toLocaleDateString(),
+          type: "rider",
+        }));
+
+        const vendorData = (
+          vendorRes.data.withdrawals ||
+          vendorRes.data ||
+          []
+        ).map((v) => ({
+          _id: v._id,
+          initiator: v.vendorName || "Unknown Vendor",
+          role: "Vendor",
+          amount: v.amount,
+          status: v.status,
+          date: new Date(v.createdAt).toLocaleDateString(),
+          type: "vendor",
+        }));
+
+        setWithdrawals([...riderData, ...vendorData]);
+      } catch (err) {
+        console.error(err);
+        toast.error("Failed to fetch withdrawals");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchWithdrawals();
+  }, []);
+
+  const handleStatusUpdate = async (id, action, type) => {
+    try {
+      const statusValue = action === "Completed"; // true or false
+
+      if (type === "rider") {
+        await axios.patch(`${API}/api/riders/withdraw/rider/${id}`, {
+          status: statusValue,
+        });
+      } else {
+        await axios.put(`${API}/api/vendors/withdrawals/${id}/status`, {
+          status: statusValue,
+        });
+      }
+
+      // Update UI instantly
+      setWithdrawals((prev) =>
+        prev.map((w) => (w._id === id ? { ...w, status: statusValue } : w))
+      );
+
+      toast.success(
+        action === "Completed" ? "Withdrawal Accepted" : "Withdrawal Rejected"
+      );
+    } catch (err) {
+      console.error(err);
+      toast.error("Error updating status");
+    }
+  };
+
+  // 🟡 Separate withdrawals by status and reverse to show newest first
+  const pendingWithdrawals = [...withdrawals]
+    .filter((w) => w.status === null || w.status === undefined)
+    .reverse();
+
+  const completedOrRejected = [...withdrawals]
+    .filter((w) => w.status === true || w.status === false)
+    .reverse();
+
+  // Pagination for pending withdrawals
+  const pendingTotalPages = Math.ceil(pendingWithdrawals.length / itemsPerPage);
+  const paginatedPending = pendingWithdrawals.slice(
+    (pendingPage - 1) * itemsPerPage,
+    pendingPage * itemsPerPage
+  );
+
+  // Pagination for transaction history
+  const historyTotalPages = Math.ceil(
+    completedOrRejected.length / itemsPerPage
+  );
+  const paginatedHistory = completedOrRejected.slice(
+    (historyPage - 1) * itemsPerPage,
+    historyPage * itemsPerPage
+  );
+
+  // Calculate summary stats
+  const summaryStats = useMemo(() => {
+    const totalAmount = withdrawals.reduce(
+      (sum, w) => sum + (w.amount || 0),
+      0
+    );
+    const completedAmount = withdrawals
+      .filter((w) => w.status === true)
+      .reduce((sum, w) => sum + (w.amount || 0), 0);
+    const pendingAmount = pendingWithdrawals.reduce(
+      (sum, w) => sum + (w.amount || 0),
+      0
+    );
+    const rejectedAmount = withdrawals
+      .filter((w) => w.status === false)
+      .reduce((sum, w) => sum + (w.amount || 0), 0);
+
+    return {
+      total: totalAmount,
+      completed: completedAmount,
+      pending: pendingAmount,
+      rejected: rejectedAmount,
+    };
+  }, [withdrawals, pendingWithdrawals]);
+
   return (
-    <div className="flex w-full">
+    <div className="flex w-full min-h-screen bg-gradient-to-br from-slate-50 via-white to-emerald-50/30">
+      {/* Sidebar overlay for mobile */}
       {openNav && (
         <div
           className="fixed inset-0 bg-black/40 z-40 md:hidden"
@@ -17,133 +154,437 @@ const WithDraw = () => {
         />
       )}
 
-      {/* Sidebar: slides in on mobile, always visible on md+ */}
+      {/* Sidebar */}
       <div
-        className={`
-          fixed top-0 left-0 h-screen z-50 transform transition-transform duration-300
-          ${openNav ? "translate-x-0" : "-translate-x-full"}
-          md:translate-x-0 w-[270px] md:w-[240px]
-        `}
+        className={`fixed top-0 left-0 h-screen z-50 transform transition-transform duration-300 ${
+          openNav ? "translate-x-0" : "-translate-x-full"
+        } md:translate-x-0 w-[270px] md:w-[240px]`}
       >
         <SideBar setOpenNav={setOpenNav} />
       </div>
 
+      {/* Main content */}
       <div className="flex-1 md:ml-[240px] w-full overflow-y-auto">
-        <div className="md:p-4 px-5 mt-3">
-          <div className="flex items-center justify-between">
-            <div className="flex gap-5 items-center">
-              <div
-                className="md:hidden flex bg-[#f6f6f6] rounded-[10px] p-2 cursor-pointer"
+        <div className="md:p-6 px-5 mt-3 pb-10">
+          {/* Header */}
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex gap-4 items-center">
+              <button
+                className="md:hidden flex bg-white/80 backdrop-blur-sm border border-gray-200 rounded-xl p-3 cursor-pointer hover:bg-white transition-all shadow-sm"
                 onClick={() => setOpenNav(true)}
               >
-                <IoMenu size={23} />
+                <IoMenu size={18} className="text-gray-700" />
+              </button>
+              <div>
+                <h1 className="font-bold text-2xl bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
+                  Withdrawal Management
+                </h1>
+                <p className="text-sm text-gray-500 mt-1">
+                  Review and approve withdrawal requests from vendors and riders
+                </p>
               </div>
-              <h1 className="font-medium text-xl">WithDrawal Approval </h1>
             </div>
-            <div className="bg-gray-300 w-fit p-2 rounded-4xl">
-              <SlBell size={20} />
-            </div>
+            <button className="bg-white/80 backdrop-blur-sm border border-gray-200 w-fit p-3 rounded-xl hover:bg-white transition-all shadow-sm group">
+              <SlBell
+                size={16}
+                className="text-gray-600 group-hover:text-emerald-500 transition-colors"
+              />
+            </button>
           </div>
 
-          <div className="flex  flex-wrap gap-5 items-center">
-            <div className="flex justify-between gap-3 mt-3 p-4  h-auto bg-purple-100 items-center rounded-2xl md:w-[23%] w-[100%] w-[48%]">
-              <div>
-                <h1 className="font-[400] text-[14px]">Total Revenue</h1>
-                <h1 className="font-[600] text-purple-600 text-[20px]">
-                  30,000
-                </h1>
+          {/* Summary Cards */}
+          {loading ? (
+            <CardsSkeleton />
+          ) : (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+              <div className="group relative overflow-hidden p-4 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-lg shadow-blue-500/20 hover:shadow-blue-500/30 transition-all hover:-translate-y-1">
+                <div className="absolute top-0 right-0 w-16 h-16 bg-white/10 rounded-full -mr-8 -mt-8" />
+                <div className="relative z-10">
+                  <div className="flex items-center gap-2 mb-1">
+                    <MdAttachMoney className="text-white/90" size={18} />
+                    <p className="text-xs font-medium text-white/90">
+                      Total Amount
+                    </p>
+                  </div>
+                  <p className="text-2xl font-bold">
+                    ₦{summaryStats.total.toLocaleString()}
+                  </p>
+                </div>
               </div>
-              <div className="bg-purple-400 p-3 rounded-4xl">
-                <GiMoneyStack size={20} />
+              <div className="group relative overflow-hidden p-4 rounded-2xl bg-gradient-to-br from-emerald-500 to-green-600 text-white shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/30 transition-all hover:-translate-y-1">
+                <div className="absolute top-0 right-0 w-16 h-16 bg-white/10 rounded-full -mr-8 -mt-8" />
+                <div className="relative z-10">
+                  <div className="flex items-center gap-2 mb-1">
+                    <IoCheckmark className="text-white/90" size={18} />
+                    <p className="text-xs font-medium text-white/90">
+                      Completed
+                    </p>
+                  </div>
+                  <p className="text-2xl font-bold">
+                    ₦{summaryStats.completed.toLocaleString()}
+                  </p>
+                </div>
+              </div>
+              <div className="group relative overflow-hidden p-4 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-500 text-white shadow-lg shadow-amber-500/20 hover:shadow-amber-500/30 transition-all hover:-translate-y-1">
+                <div className="absolute top-0 right-0 w-16 h-16 bg-white/10 rounded-full -mr-8 -mt-8" />
+                <div className="relative z-10">
+                  <div className="flex items-center gap-2 mb-1">
+                    <FiClock className="text-white/90" size={18} />
+                    <p className="text-xs font-medium text-white/90">Pending</p>
+                  </div>
+                  <p className="text-2xl font-bold">
+                    ₦{summaryStats.pending.toLocaleString()}
+                  </p>
+                </div>
+              </div>
+              <div className="group relative overflow-hidden p-4 rounded-2xl bg-gradient-to-br from-rose-500 to-red-600 text-white shadow-lg shadow-red-500/20 hover:shadow-red-500/30 transition-all hover:-translate-y-1">
+                <div className="absolute top-0 right-0 w-16 h-16 bg-white/10 rounded-full -mr-8 -mt-8" />
+                <div className="relative z-10">
+                  <div className="flex items-center gap-2 mb-1">
+                    <IoClose className="text-white/90" size={18} />
+                    <p className="text-xs font-medium text-white/90">
+                      Rejected
+                    </p>
+                  </div>
+                  <p className="text-2xl font-bold">
+                    ₦{summaryStats.rejected.toLocaleString()}
+                  </p>
+                </div>
               </div>
             </div>
-          </div>
+          )}
+
+          {/* Pending Withdrawals Table */}
           <div className="mt-7">
-            <h1>Pending Withdrawal</h1>
+            <h2 className="font-bold text-lg text-gray-900 flex items-center gap-2 mb-3">
+              <div className="w-1 h-5 bg-amber-500 rounded-full" />
+              Pending Withdrawals
+            </h2>
             <div className="overflow-x-auto mt-4">
-              <table className="min-w-full border border-gray-200 rounded-lg overflow-hidden">
-                <thead className="bg-gray-100">
+              <table className="min-w-full">
+                <thead className="bg-gradient-to-r from-gray-50 to-slate-50">
                   <tr>
-                    <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">
+                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
                       Date
                     </th>
-                    <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">
+                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
                       Initiator
                     </th>
-                    <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">
+                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
                       Role
                     </th>
-                    <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">
+                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
                       Amount
                     </th>
-                    <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">
+                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-100">
+                  {loading ? (
+                    [...Array(3)].map((_, i) => (
+                      <tr key={i} className="animate-pulse">
+                        <td className="px-6 py-4">
+                          <div className="h-4 bg-gray-200 rounded w-20"></div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="h-4 bg-gray-200 rounded w-32"></div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="h-4 bg-gray-200 rounded w-16"></div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="h-4 bg-gray-200 rounded w-24"></div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="h-8 bg-gray-200 rounded w-32"></div>
+                        </td>
+                      </tr>
+                    ))
+                  ) : pendingWithdrawals.length === 0 ? (
+                    <tr>
+                      <td colSpan="5" className="px-6 py-12 text-center">
+                        <div className="flex flex-col items-center gap-2">
+                          <FiClock size={36} className="text-gray-300" />
+                          <p className="text-gray-500 font-medium">
+                            No pending withdrawals
+                          </p>
+                          <p className="text-sm text-gray-400">
+                            New withdrawal requests will appear here
+                          </p>
+                        </div>
+                      </td>
+                    </tr>
+                  ) : (
+                    paginatedPending.map((item) => (
+                      <tr
+                        key={item._id}
+                        className="hover:bg-gray-50 transition-colors"
+                      >
+                        <td className="px-6 py-4 text-sm text-gray-600">
+                          {item.date}
+                        </td>
+                        <td className="px-6 py-4 text-sm font-medium text-gray-900">
+                          {item.initiator}
+                        </td>
+                        <td className="px-6 py-4 text-sm">
+                          <span
+                            className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
+                              item.role === "Rider"
+                                ? "bg-blue-100 text-blue-800"
+                                : "bg-green-100 text-green-800"
+                            }`}
+                          >
+                            {item.role}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-sm font-semibold text-gray-900">
+                          ₦{item.amount.toLocaleString()}
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() =>
+                                handleStatusUpdate(
+                                  item._id,
+                                  "Completed",
+                                  item.type
+                                )
+                              }
+                              className="px-4 py-1.5 rounded-lg bg-emerald-500 text-white text-xs font-medium hover:bg-emerald-600 transition-colors flex items-center gap-1"
+                            >
+                              <IoCheckmark size={14} />
+                              Accept
+                            </button>
+                            <button
+                              onClick={() =>
+                                handleStatusUpdate(
+                                  item._id,
+                                  "Rejected",
+                                  item.type
+                                )
+                              }
+                              className="px-4 py-1.5 rounded-lg bg-red-500 text-white text-xs font-medium hover:bg-red-600 transition-colors flex items-center gap-1"
+                            >
+                              <IoClose size={14} />
+                              Reject
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+            {/* Pagination for Pending Withdrawals */}
+            {pendingTotalPages > 1 && (
+              <div className="flex items-center justify-between mt-4 px-4">
+                <p className="text-sm text-gray-600">
+                  Showing {(pendingPage - 1) * itemsPerPage + 1} to{" "}
+                  {Math.min(
+                    pendingPage * itemsPerPage,
+                    pendingWithdrawals.length
+                  )}{" "}
+                  of {pendingWithdrawals.length} pending withdrawals
+                </p>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() =>
+                      setPendingPage((prev) => Math.max(prev - 1, 1))
+                    }
+                    disabled={pendingPage === 1}
+                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                  >
+                    Previous
+                  </button>
+                  <div className="flex gap-1">
+                    {[...Array(pendingTotalPages)].map((_, i) => (
+                      <button
+                        key={i + 1}
+                        onClick={() => setPendingPage(i + 1)}
+                        className={`px-3 py-2 text-sm font-medium rounded-lg transition-all ${
+                          pendingPage === i + 1
+                            ? "bg-amber-500 text-white"
+                            : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
+                        }`}
+                      >
+                        {i + 1}
+                      </button>
+                    ))}
+                  </div>
+                  <button
+                    onClick={() =>
+                      setPendingPage((prev) =>
+                        Math.min(prev + 1, pendingTotalPages)
+                      )
+                    }
+                    disabled={pendingPage === pendingTotalPages}
+                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Transaction History */}
+          <div className="mt-7">
+            <h2 className="font-bold text-lg text-gray-900 flex items-center gap-2 mb-3">
+              <div className="w-1 h-5 bg-gray-500 rounded-full" />
+              Transaction History
+            </h2>
+            <div className="overflow-x-auto mt-4">
+              <table className="min-w-full">
+                <thead className="bg-gradient-to-r from-gray-50 to-slate-50">
+                  <tr>
+                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                      Date
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                      Initiator
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                      Role
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                      Amount
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
                       Status
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  <tr>
-                    <td className="px-6 py-4 text-sm text-gray-900">
-                      20-10-2025
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-900">
-                      Jhone doe
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-900">Rider</td>
-                    <td className="px-6 py-4 text-sm text-gray-900">2,000</td>
-                    <td className="px-6 py-4 flex gap-2">
-                      <button className="px-4 py-1 rounded-full bg-emerald-500 text-white font-small hover:bg-emerald-700">
-                        Accept
-                      </button>
-                      <button className="px-4 py-1 rounded-full bg-red-600 text-white font-small hover:bg-red-700">
-                        Reject
-                      </button>
-                    </td>
-                  </tr>
+                <tbody className="bg-white divide-y divide-gray-100">
+                  {loading ? (
+                    [...Array(3)].map((_, i) => (
+                      <tr key={i} className="animate-pulse">
+                        <td className="px-6 py-4">
+                          <div className="h-4 bg-gray-200 rounded w-20"></div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="h-4 bg-gray-200 rounded w-32"></div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="h-4 bg-gray-200 rounded w-16"></div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="h-4 bg-gray-200 rounded w-24"></div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="h-4 bg-gray-200 rounded w-20"></div>
+                        </td>
+                      </tr>
+                    ))
+                  ) : completedOrRejected.length === 0 ? (
+                    <tr>
+                      <td colSpan="5" className="px-6 py-12 text-center">
+                        <div className="flex flex-col items-center gap-2">
+                          <MdPending size={36} className="text-gray-300" />
+                          <p className="text-gray-500 font-medium">
+                            No transaction history
+                          </p>
+                          <p className="text-sm text-gray-400">
+                            Completed and rejected withdrawals will appear here
+                          </p>
+                        </div>
+                      </td>
+                    </tr>
+                  ) : (
+                    paginatedHistory.map((item) => (
+                      <tr
+                        key={item._id}
+                        className="hover:bg-gray-50 transition-colors"
+                      >
+                        <td className="px-6 py-4 text-sm text-gray-600">
+                          {item.date}
+                        </td>
+                        <td className="px-6 py-4 text-sm font-medium text-gray-900">
+                          {item.initiator}
+                        </td>
+                        <td className="px-6 py-4 text-sm">
+                          <span
+                            className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
+                              item.role === "Rider"
+                                ? "bg-blue-100 text-blue-800"
+                                : "bg-green-100 text-green-800"
+                            }`}
+                          >
+                            {item.role}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-sm font-semibold text-gray-900">
+                          ₦{item.amount.toLocaleString()}
+                        </td>
+                        <td className="px-6 py-4">
+                          <span
+                            className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
+                              item.status === true
+                                ? "bg-green-100 text-green-800"
+                                : "bg-red-100 text-red-800"
+                            }`}
+                          >
+                            {item.status === true ? "Completed" : "Rejected"}
+                          </span>
+                        </td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
             </div>
-          </div>
-          <div className="mt-7">
-            <h1>Transaction History </h1>
-            <div className="overflow-x-auto mt-4">
-              <table className="min-w-full border border-gray-200 rounded-lg overflow-hidden">
-                <thead className="bg-gray-100">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">
-                      Date
-                    </th>
-                    <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">
-                      Initiator
-                    </th>
-                    <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">
-                      Role
-                    </th>
-                    <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">
-                      Amount
-                    </th>
-                    <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">
-                      Status
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  <tr>
-                    <td className="px-6 py-4 text-sm text-gray-900">
-                      20-10-2025
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-900">
-                      Jhone doe
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-900">Rider</td>
-                    <td className="px-6 py-4 text-sm text-gray-900">2,000</td>
-                    <td className="px-6 py-4 flex gap-2">
-                      <div className="text-green-500">Completed</div>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
+            {/* Pagination for Transaction History */}
+            {historyTotalPages > 1 && (
+              <div className="flex items-center justify-between mt-4 px-4">
+                <p className="text-sm text-gray-600">
+                  Showing {(historyPage - 1) * itemsPerPage + 1} to{" "}
+                  {Math.min(
+                    historyPage * itemsPerPage,
+                    completedOrRejected.length
+                  )}{" "}
+                  of {completedOrRejected.length} transactions
+                </p>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() =>
+                      setHistoryPage((prev) => Math.max(prev - 1, 1))
+                    }
+                    disabled={historyPage === 1}
+                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                  >
+                    Previous
+                  </button>
+                  <div className="flex gap-1">
+                    {[...Array(historyTotalPages)].map((_, i) => (
+                      <button
+                        key={i + 1}
+                        onClick={() => setHistoryPage(i + 1)}
+                        className={`px-3 py-2 text-sm font-medium rounded-lg transition-all ${
+                          historyPage === i + 1
+                            ? "bg-gray-500 text-white"
+                            : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
+                        }`}
+                      >
+                        {i + 1}
+                      </button>
+                    ))}
+                  </div>
+                  <button
+                    onClick={() =>
+                      setHistoryPage((prev) =>
+                        Math.min(prev + 1, historyTotalPages)
+                      )
+                    }
+                    disabled={historyPage === historyTotalPages}
+                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>

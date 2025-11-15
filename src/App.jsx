@@ -10,18 +10,22 @@ import Universities from "./Pages/Universities/Universities";
 import WithDraw from "./Pages/WithDraw/WithDraw";
 import Promotion from "./Pages/Promotion/Promotion";
 import Fee from "./Pages/Fee/Fee";
+import { Toaster } from "react-hot-toast";
 
 function App() {
   return (
-    <Routes>
-      <Route path="/" element={<Login />} />
-      <Route path="/home" element={<Home />} />
-      <Route path="/order" element={<Orders />} />
-      <Route path="/fee" element={<Fee />} />
-      <Route path="/universities" element={<Universities />} />
-      <Route path="/Withdraw" element={<WithDraw />} />
-      <Route path="/promotion" element={<Promotion />} />
-    </Routes>
+    <>
+      <Routes>
+        <Route path="/" element={<Login />} />
+        <Route path="/home" element={<Home />} />
+        <Route path="/order" element={<Orders />} />
+        <Route path="/fee" element={<Fee />} />
+        <Route path="/universities" element={<Universities />} />
+        <Route path="/Withdraw" element={<WithDraw />} />
+        <Route path="/promotion" element={<Promotion />} />
+      </Routes>
+      <Toaster />
+    </>
   );
 }
 
