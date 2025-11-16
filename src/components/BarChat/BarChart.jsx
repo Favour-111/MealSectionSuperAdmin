@@ -25,6 +25,20 @@ const dayLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const BarChart = ({ filteredOrders = [], title = "Weekly Overview" }) => {
   const chartRef = useRef(null);
 
+  // Normalize title to a safe renderable string (avoid passing objects)
+  const safeTitle = useMemo(() => {
+    if (title == null) return "Weekly Overview";
+    if (typeof title === "string" || typeof title === "number")
+      return String(title);
+    // Attempt common field fallbacks
+    if (title.header) return String(title.header);
+    if (title.name) return String(title.name);
+    if (title.storeName) return String(title.storeName);
+    if (title.title) return String(title.title);
+    // Last resort: do not JSON.stringify large objects; just generic label
+    return "Weekly Overview";
+  }, [title]);
+
   // Derive weekly counts from filteredOrders if provided
   const { labels, values } = useMemo(() => {
     if (!Array.isArray(filteredOrders) || filteredOrders.length === 0) {
@@ -109,8 +123,8 @@ const BarChart = ({ filteredOrders = [], title = "Weekly Overview" }) => {
   };
 
   return (
-    <div className="mt-6 bg-white/80 backdrop-blur-sm rounded-2xl p-4 shadow-sm border border-gray-100">
-      <div className="font-semibold text-gray-900 mb-2">{title}</div>
+    <div className="mt-6 bg-white/80 backdrop-blur-sm rounded-2xl p-4 border border-gray-100">
+      <div className="font-semibold text-gray-900 mb-2">{safeTitle}</div>
       <div className="h-64">
         <Bar ref={chartRef} data={data} options={options} />
       </div>

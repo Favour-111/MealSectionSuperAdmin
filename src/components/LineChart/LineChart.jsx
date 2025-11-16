@@ -131,7 +131,7 @@ const LineChart = ({ filteredOrders, title = "Total Revenue" }) => {
   };
 
   return (
-    <div className="mt-6 bg-white/80 backdrop-blur-sm rounded-2xl p-4 shadow-sm border border-gray-100">
+    <div className="mt-6 bg-white/80 backdrop-blur-sm rounded-2xl p-4 border border-gray-100">
       <div className="font-semibold text-gray-900 mb-2">{title}</div>
       <div className="h-64">
         <Line ref={chartRef} data={data} options={options} />
