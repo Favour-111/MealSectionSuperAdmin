@@ -7,6 +7,7 @@ import { useNavigate } from "react-router-dom";
 import { BsBank } from "react-icons/bs";
 import { IoGiftOutline, IoWalletOutline } from "react-icons/io5";
 import { FiSettings } from "react-icons/fi";
+import { MdStorefront } from "react-icons/md";
 import { CiLogout } from "react-icons/ci";
 const SideBar = ({ setOpenNav }) => {
   const pathToItem = {
@@ -14,6 +15,7 @@ const SideBar = ({ setOpenNav }) => {
     "/order": "order",
     "/fee": "fee",
     "/universities": "universities",
+    "/vendors": "vendors",
     "/withdraw": "withdraw",
     "/promotion": "promotion",
   };
@@ -80,6 +82,19 @@ const SideBar = ({ setOpenNav }) => {
         >
           <BsBank />
           <div className="text-[13px]">Universities</div>
+        </div>
+        <div
+          onClick={() => {
+            navigate("/vendors");
+          }}
+          className={`flex items-center gap-3 h-11 cursor-pointer w-full px-4 rounded-lg mx-2 my-1 transition-all ${
+            selectedItem === "vendors"
+              ? "bg-indigo-50 text-indigo-700"
+              : "text-gray-700 hover:bg-gray-50"
+          } `}
+        >
+          <MdStorefront />
+          <div className="text-[13px]">Vendors</div>
         </div>
         <div
           onClick={() => {

@@ -101,12 +101,6 @@ const Orders = () => {
                 </p>
               </div>
             </div>
-            <button className="bg-white/80 backdrop-blur-sm border border-gray-200 w-fit p-3 rounded-xl hover:bg-white transition-all shadow-sm group">
-              <SlBell
-                size={16}
-                className="text-gray-600 group-hover:text-purple-500 transition-colors"
-              />
-            </button>
           </div>
 
           {/* Filter */}
@@ -365,7 +359,7 @@ const Orders = () => {
             </div>
             {/* Pagination for Ongoing Orders */}
             {ongoingTotalPages > 1 && (
-              <div className="flex items-center justify-between mt-4 px-4">
+              <div className="flex flex-col gap-2 sm:flex-row items-center justify-between mt-4 px-4">
                 <p className="text-sm text-gray-600">
                   Showing {(ongoingPage - 1) * itemsPerPage + 1} to{" "}
                   {Math.min(ongoingPage * itemsPerPage, ongoingOrders.length)}{" "}
@@ -491,7 +485,7 @@ const Orders = () => {
             </div>
             {/* Pagination for Delivered Orders */}
             {deliveredTotalPages > 1 && (
-              <div className="flex items-center justify-between mt-4 px-4">
+              <div className="flex flex-col gap-2 sm:flex-row items-center justify-between mt-4 px-4">
                 <p className="text-sm text-gray-600">
                   Showing {(deliveredPage - 1) * itemsPerPage + 1} to{" "}
                   {Math.min(

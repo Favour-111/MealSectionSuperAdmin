@@ -12,6 +12,8 @@ import { CardsSkeleton } from "../../components/ui/Skeleton";
 const WithDraw = () => {
   const [openNav, setOpenNav] = useState(false);
   const [withdrawals, setWithdrawals] = useState([]);
+  const [riders, setRiders] = useState([]);
+  const [vendors, setVendors] = useState([]);
   const [loading, setLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState({});
   const [showSuccessModal, setShowSuccessModal] = useState(false);
@@ -24,13 +26,33 @@ const WithDraw = () => {
 
   // 🟢 Fetch both Rider and Vendor withdrawals
   useEffect(() => {
-    const fetchWithdrawals = async () => {
+    const fetchAll = async () => {
       setLoading(true);
       try {
-        const [riderRes, vendorRes] = await Promise.all([
-          axios.get(`${API}/api/riders/withdraw`),
-          axios.get(`${API}/api/vendors/withdrawals`),
-        ]);
+        const [riderRes, vendorRes, allRidersRes, allVendorsRes] =
+          await Promise.all([
+            axios.get(`${API}/api/riders/withdraw`),
+            axios.get(`${API}/api/vendors/withdrawals`),
+            axios.get(`${API}/api/riders/allRiders`),
+            axios.get(`${API}/api/vendors/all`),
+          ]);
+
+        setRiders(allRidersRes.data || []);
+        setVendors(allVendorsRes.data || []);
+
+        // Helper to get university by id
+        const getRiderUniversity = (riderId) => {
+          const rider = (allRidersRes.data || []).find(
+            (r) => r._id === riderId
+          );
+          return rider?.university || "N/A";
+        };
+        const getVendorUniversity = (vendorId) => {
+          const vendor = (allVendorsRes.data || []).find(
+            (v) => v._id === vendorId
+          );
+          return vendor?.university || "N/A";
+        };
 
         // Normalize both data sources
         const riderData = riderRes.data.map((r) => ({
@@ -41,6 +63,7 @@ const WithDraw = () => {
           status: r.status, // could be true, false, or null
           date: new Date(r.date || r.createdAt).toLocaleDateString(),
           type: "rider",
+          university: getRiderUniversity(r.riderId),
         }));
 
         const vendorData = (
@@ -55,6 +78,7 @@ const WithDraw = () => {
           status: v.status,
           date: new Date(v.createdAt).toLocaleDateString(),
           type: "vendor",
+          university: getVendorUniversity(v.vendorId?._id || v.vendorId),
         }));
 
         setWithdrawals([...riderData, ...vendorData]);
@@ -66,7 +90,7 @@ const WithDraw = () => {
       }
     };
 
-    fetchWithdrawals();
+    fetchAll();
   }, []);
 
   const handleStatusUpdate = async (id, action, type) => {
@@ -205,12 +229,6 @@ const WithDraw = () => {
                   </p>
                 </div>
               </div>
-              <button className="bg-white/80 backdrop-blur-sm border border-gray-200 w-fit p-3 rounded-xl hover:bg-white transition-all shadow-sm group">
-                <SlBell
-                  size={16}
-                  className="text-gray-600 group-hover:text-emerald-500 transition-colors"
-                />
-              </button>
             </div>
 
             {/* Summary Cards */}
@@ -294,6 +312,9 @@ const WithDraw = () => {
                         Initiator
                       </th>
                       <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                        University
+                      </th>
+                      <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
                         Role
                       </th>
                       <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
@@ -350,6 +371,9 @@ const WithDraw = () => {
                           </td>
                           <td className="px-6 py-4 text-sm font-medium text-gray-900">
                             {item.initiator}
+                          </td>
+                          <td className="px-6 py-4 text-sm text-gray-600 whitespace-nowrap">
+                            {item.university || "N/A"}
                           </td>
                           <td className="px-6 py-4 text-sm">
                             <span
@@ -530,6 +554,9 @@ const WithDraw = () => {
                         Initiator
                       </th>
                       <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                        University
+                      </th>
+                      <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
                         Role
                       </th>
                       <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
@@ -587,6 +614,9 @@ const WithDraw = () => {
                           </td>
                           <td className="px-6 py-4 text-sm font-medium text-gray-900">
                             {item.initiator}
+                          </td>
+                          <td className="px-6 py-4 text-sm text-gray-600 whitespace-nowrap">
+                            {item.university || "N/A"}
                           </td>
                           <td className="px-6 py-4 text-sm">
                             <span

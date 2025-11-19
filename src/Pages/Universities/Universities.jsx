@@ -90,12 +90,6 @@ const Universities = () => {
                 </p>
               </div>
             </div>
-            <button className="bg-white/80 backdrop-blur-sm border border-gray-200 w-fit p-3 rounded-xl hover:bg-white transition-all shadow-sm group">
-              <SlBell
-                size={16}
-                className="text-gray-600 group-hover:text-blue-500 transition-colors"
-              />
-            </button>
           </div>
           {/* University Selector */}
           <div className="mb-5">

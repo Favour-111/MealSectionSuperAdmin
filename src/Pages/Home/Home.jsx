@@ -66,12 +66,6 @@ const Home = () => {
                 </p>
               </div>
             </div>
-            <button className="bg-white/80 backdrop-blur-sm border border-gray-200 w-fit p-3 rounded-xl hover:bg-white transition-all shadow-sm group">
-              <SlBell
-                size={16}
-                className="text-gray-600 group-hover:text-purple-500 transition-colors"
-              />
-            </button>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-6">

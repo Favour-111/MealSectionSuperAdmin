@@ -10,6 +10,7 @@ import Universities from "./Pages/Universities/Universities";
 import WithDraw from "./Pages/WithDraw/WithDraw";
 import Promotion from "./Pages/Promotion/Promotion";
 import Fee from "./Pages/Fee/Fee";
+import Vendors from "./Pages/Vendors/Vendors";
 import { Toaster } from "react-hot-toast";
 
 function App() {
@@ -21,6 +22,7 @@ function App() {
         <Route path="/order" element={<Orders />} />
         <Route path="/fee" element={<Fee />} />
         <Route path="/universities" element={<Universities />} />
+        <Route path="/vendors" element={<Vendors />} />
         <Route path="/Withdraw" element={<WithDraw />} />
         <Route path="/promotion" element={<Promotion />} />
       </Routes>

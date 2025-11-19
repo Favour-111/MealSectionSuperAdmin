@@ -16,7 +16,6 @@ const Fee = () => {
   const [vendors, setVendors] = useState([]);
   const [selectedUniversity, setSelectedUniversity] = useState("");
   const [selectedVendor, setSelectedVendor] = useState("");
-  const [serviceFee, setServiceFee] = useState("");
   const [minFee, setMinFee] = useState("");
   const [maxFee, setMaxFee] = useState("");
   const [fees, setFees] = useState([]);
@@ -30,10 +29,7 @@ const Fee = () => {
   // Calculate summary stats
   const summaryStats = useMemo(() => {
     const totalVendors = fees.length;
-    const avgServiceFee =
-      fees.length > 0
-        ? fees.reduce((sum, f) => sum + (f.serviceFee || 0), 0) / fees.length
-        : 0;
+
     const avgMinFee =
       fees.length > 0
         ? fees.reduce((sum, f) => sum + (f.minimumDeliveryFee || 0), 0) /
@@ -47,7 +43,6 @@ const Fee = () => {
 
     return {
       totalVendors,
-      avgServiceFee: Math.round(avgServiceFee),
       avgMinFee: Math.round(avgMinFee),
       avgMaxFee: Math.round(avgMaxFee),
     };
@@ -93,7 +88,7 @@ const Fee = () => {
 
   // ✅ Handle Add Fee
   const handleAddFee = async () => {
-    if (!selectedVendor || !serviceFee || !minFee || !maxFee)
+    if (!selectedVendor || !minFee || !maxFee)
       return toast.error("Please fill in all fields");
 
     setLoading(true);
@@ -102,11 +97,9 @@ const Fee = () => {
         vendorId: selectedVendor,
         minimumDeliveryFee: minFee,
         maximumDeliveryFee: maxFee,
-        serviceFee: serviceFee,
       });
 
       toast.success("Fee added successfully");
-      setServiceFee("");
       setMinFee("");
       setMaxFee("");
       setSelectedVendor("");
@@ -167,17 +160,12 @@ const Fee = () => {
                 <h1 className="font-bold text-2xl bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
                   Fee Management
                 </h1>
+
                 <p className="text-sm text-gray-500 mt-1">
                   Configure service and delivery fees for vendors
                 </p>
               </div>
             </div>
-            <button className="bg-white/80 backdrop-blur-sm border border-gray-200 w-fit p-3 rounded-xl hover:bg-white transition-all shadow-sm group">
-              <SlBell
-                size={16}
-                className="text-gray-600 group-hover:text-indigo-500 transition-colors"
-              />
-            </button>
           </div>
 
           {/* Summary Cards */}
@@ -199,20 +187,7 @@ const Fee = () => {
                   </p>
                 </div>
               </div>
-              <div className="group relative overflow-hidden p-4 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-lg shadow-blue-500/20 hover:shadow-blue-500/30 transition-all hover:-translate-y-1">
-                <div className="absolute top-0 right-0 w-16 h-16 bg-white/10 rounded-full -mr-8 -mt-8" />
-                <div className="relative z-10">
-                  <div className="flex items-center gap-2 mb-1">
-                    <MdAttachMoney className="text-white/90" size={18} />
-                    <p className="text-xs font-medium text-white/90">
-                      Avg Service Fee
-                    </p>
-                  </div>
-                  <p className="text-2xl font-bold">
-                    ₦{summaryStats.avgServiceFee}
-                  </p>
-                </div>
-              </div>
+
               <div className="group relative overflow-hidden p-4 rounded-2xl bg-gradient-to-br from-emerald-500 to-green-600 text-white shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/30 transition-all hover:-translate-y-1">
                 <div className="absolute top-0 right-0 w-16 h-16 bg-white/10 rounded-full -mr-8 -mt-8" />
                 <div className="relative z-10">
@@ -299,19 +274,6 @@ const Fee = () => {
 
               <div>
                 <label className="text-xs font-medium text-gray-600 block mb-2">
-                  Service Fee
-                </label>
-                <input
-                  type="number"
-                  value={serviceFee}
-                  onChange={(e) => setServiceFee(e.target.value)}
-                  placeholder="Enter service fee"
-                  className="border-2 border-gray-200 w-full rounded-xl py-2.5 px-3 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all bg-white"
-                />
-              </div>
-
-              <div>
-                <label className="text-xs font-medium text-gray-600 block mb-2">
                   Minimum Delivery Fee
                 </label>
                 <input
@@ -374,9 +336,7 @@ const Fee = () => {
                     <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
                       University
                     </th>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
-                      Service Fee
-                    </th>
+
                     <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
                       Min Fee
                     </th>
@@ -403,9 +363,7 @@ const Fee = () => {
                         <td className="px-6 py-4 text-sm text-gray-600 whitespace-nowrap">
                           {f.vendorId?.university || "N/A"}
                         </td>
-                        <td className="px-6 py-4 text-sm font-semibold text-gray-900">
-                          ₦{f.serviceFee}
-                        </td>
+
                         <td className="px-6 py-4 text-sm text-gray-600">
                           ₦{f.minimumDeliveryFee}
                         </td>
