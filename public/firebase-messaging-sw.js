@@ -24,9 +24,9 @@ messaging.onBackgroundMessage((payload) => {
   const notificationTitle = payload.notification.title;
   const notificationOptions = {
     body: payload.notification.body,
-    icon: "https://favour-111.github.io/MEalSection-ComongSoon-2.0/WhatsApp%20Image%202024-08-24%20at%2020.18.12_988ce6f9.jpg",
+    icon: "https://github.com/Favour-111/my-asset/blob/main/images%20(2).jpeg?raw=true",
     badge:
-      "https://favour-111.github.io/MEalSection-ComongSoon-2.0/WhatsApp%20Image%202024-08-24%20at%2020.18.12_988ce6f9.jpg",
+      "https://github.com/Favour-111/my-asset/blob/main/images%20(2).jpeg?raw=true",
     tag: payload.data?.orderId || "delivery-notification",
     requireInteraction: true,
     data: payload.data,
@@ -62,7 +62,7 @@ self.addEventListener("push", (event) => {
       body: data.notification?.body || data.body || "",
       icon:
         data.notification?.icon ||
-        "https://favour-111.github.io/MEalSection-ComongSoon-2.0/WhatsApp%20Image%202024-08-24%20at%2020.18.12_988ce6f9.jpg",
+        "https://github.com/Favour-111/my-asset/blob/main/images%20(2).jpeg?raw=true",
       data: data.data || {},
     };
     event.waitUntil(self.registration.showNotification(title, options));

@@ -18,7 +18,7 @@ const SideBar = ({ setOpenNav }) => {
     <div className="h-screen bg-white/90 backdrop-blur-sm shadow-sm w-full overflow-y-auto border-r border-gray-100">
       <div className="flex items-center justify-between p-3 border-b border-gray-100">
         <img
-          src="https://favour-111.github.io/MEalSection-ComongSoon-2.0/WhatsApp%20Image%202024-08-24%20at%2020.18.12_988ce6f9.jpg"
+          src="https://github.com/Favour-111/my-asset/blob/main/images%20(2).jpeg?raw=true"
           alt="logo"
           className="w-[140px] hover:opacity-90 transition-opacity"
         />
