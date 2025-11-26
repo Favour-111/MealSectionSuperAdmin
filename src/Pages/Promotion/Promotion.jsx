@@ -10,7 +10,7 @@ import toast from "react-hot-toast";
 import { CardsSkeleton, TableSkeleton } from "../../components/ui/Skeleton";
 import { useAppContext } from "../../components/AppContext";
 
-const PROMO_API = "http://localhost:5000/api/promotions";
+const PROMO_API = `${import.meta.env.VITE_REACT_APP_API}/api/promotions`;
 
 const Promotion = () => {
   const { Universities, vendors } = useAppContext();
