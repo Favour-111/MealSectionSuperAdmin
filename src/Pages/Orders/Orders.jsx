@@ -201,8 +201,14 @@ const Orders = () => {
                     <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
                       Status
                     </th>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
-                      Amount
+                    <th className="px-1 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                      Service Fee
+                    </th>
+                    <th className="px-1 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                      Delivery Fee
+                    </th>
+                    <th className="px-1 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                      Total
                     </th>
                   </tr>
                 </thead>
@@ -216,14 +222,13 @@ const Orders = () => {
                         className="hover:bg-gray-50 transition-colors"
                       >
                         <td className="px-6 py-4 text-sm font-medium text-gray-900">
-                          #{item._id.slice(-6)}
+                          #{item._id.slice(0, 8)}
                         </td>
                         <td className="px-6 py-4 text-sm text-gray-600">
                           {item.createdAt
                             ? new Date(item.createdAt).toLocaleDateString()
                             : "N/A"}
                         </td>
-
                         <td className="px-6 py-4 text-sm text-gray-900">
                           {allUsers?.find((itm) => itm?._id === item.userId)
                             ?.fullName || "Unknown User"}
@@ -246,6 +251,12 @@ const Orders = () => {
                               Cancelled
                             </span>
                           )}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-blue-700">
+                          ₦{(item.serviceFee || 0).toLocaleString()}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-green-700">
+                          ₦{(item.deliveryFee || 0).toLocaleString()}
                         </td>
                         <td className="px-6 py-4 text-sm font-semibold text-gray-900">
                           ₦
@@ -297,8 +308,14 @@ const Orders = () => {
                     <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
                       Status
                     </th>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
-                      Amount
+                    <th className="px-1 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                      Service Fee
+                    </th>
+                    <th className="px-1 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                      Delivery Fee
+                    </th>
+                    <th className="px-1 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                      Total
                     </th>
                   </tr>
                 </thead>
@@ -306,36 +323,44 @@ const Orders = () => {
                   {isLoading ? (
                     <TableSkeleton rows={4} cols={5} />
                   ) : paginatedOngoing.length > 0 ? (
-                    paginatedOngoing.map((item) => (
-                      <tr key={item._id}>
-                        <td className="px-6 py-4 text-sm text-gray-900">
-                          #{item._id.slice(-6)}
-                        </td>
-                        <td className="px-6 py-4 text-sm text-gray-900">
-                          {item.createdAt
-                            ? new Date(item.createdAt).toLocaleDateString()
-                            : "N/A"}
-                        </td>
-
-                        <td className="px-6 py-4 text-sm text-gray-900">
-                          {allUsers?.find((itm) => itm?._id === item.userId)
-                            ?.fullName || "Unknown User"}
-                        </td>
-                        <td className="px-6 py-4 text-sm">
-                          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
-                            Pending
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 text-sm font-semibold text-gray-900">
-                          ₦
-                          {(
-                            item.subtotal +
-                            item.serviceFee +
-                            item.deliveryFee
-                          ).toLocaleString()}
-                        </td>
-                      </tr>
-                    ))
+                    paginatedOngoing
+                      .slice()
+                      .reverse()
+                      .map((item) => (
+                        <tr key={item._id}>
+                          <td className="px-6 py-4 text-sm text-gray-900">
+                            #{item._id.slice(0, 8)}
+                          </td>
+                          <td className="px-6 py-4 text-sm text-gray-900">
+                            {item.createdAt
+                              ? new Date(item.createdAt).toLocaleDateString()
+                              : "N/A"}
+                          </td>
+                          <td className="px-6 py-4 text-sm text-gray-900">
+                            {allUsers?.find((itm) => itm?._id === item.userId)
+                              ?.fullName || "Unknown User"}
+                          </td>
+                          <td className="px-6 py-4 text-sm">
+                            <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
+                              Pending
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 text-sm text-blue-700">
+                            ₦{(item.serviceFee || 0).toLocaleString()}
+                          </td>
+                          <td className="px-6 py-4 text-sm text-green-700">
+                            ₦{(item.deliveryFee || 0).toLocaleString()}
+                          </td>
+                          <td className="px-6 py-4 text-sm font-semibold text-gray-900">
+                            ₦
+                            {(
+                              item.subtotal +
+                              item.serviceFee +
+                              item.deliveryFee
+                            ).toLocaleString()}
+                          </td>
+                        </tr>
+                      ))
                   ) : (
                     <tr>
                       <td colSpan="5" className="px-6 py-12 text-center">
@@ -426,8 +451,14 @@ const Orders = () => {
                     <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
                       Status
                     </th>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
-                      Amount
+                    <th className="px-1 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                      Service Fee
+                    </th>
+                    <th className="px-1 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                      Delivery Fee
+                    </th>
+                    <th className="px-1 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                      Total
                     </th>
                   </tr>
                 </thead>
@@ -438,14 +469,13 @@ const Orders = () => {
                     paginatedDelivered.map((item) => (
                       <tr key={item._id}>
                         <td className="px-6 py-4 text-sm text-gray-900">
-                          #{item._id.slice(-6)}
+                          #{item._id.slice(0, 8)}
                         </td>
                         <td className="px-6 py-4 text-sm text-gray-900">
                           {item.createdAt
                             ? new Date(item.createdAt).toLocaleDateString()
                             : "N/A"}
                         </td>
-
                         <td className="px-6 py-4 text-sm text-gray-900">
                           {allUsers?.find((itm) => itm?._id === item.userId)
                             ?.fullName || "Unknown User"}
@@ -454,6 +484,12 @@ const Orders = () => {
                           <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
                             Delivered
                           </span>
+                        </td>
+                        <td className="px-6 py-4 text-sm text-blue-700">
+                          ₦{(item.serviceFee || 0).toLocaleString()}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-green-700">
+                          ₦{(item.deliveryFee || 0).toLocaleString()}
                         </td>
                         <td className="px-6 py-4 text-sm font-semibold text-gray-900">
                           ₦

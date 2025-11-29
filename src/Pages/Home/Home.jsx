@@ -17,15 +17,113 @@ import BarChart from "../../components/BarChat/BarChart";
 import { useAppContext } from "../../components/AppContext";
 import "./Home.css";
 const Home = () => {
-  const [openNav, setOpenNav] = useState(false);
   const { Universities, allOrder } = useAppContext();
+  const [selectedUniversity, setSelectedUniversity] = useState("All");
+  const [feePeriod, setFeePeriod] = useState("daily");
+  const [selectedDate, setSelectedDate] = useState("");
+  // const { Universities, allOrder } = useAppContext();
+  // Only sum accepted orders
+  // Fee summary matches 'success' logic: only currentStatus === 'Delivered'
+  // Only sum orders where all packs are accepted
+  const acceptedOrders = allOrder
+    ? allOrder.filter(
+        (order) =>
+          Array.isArray(order.packs) &&
+          order.packs.length > 0 &&
+          order.packs.every((pack) => pack.accepted === true)
+      )
+    : [];
+  const now = new Date();
+  const filteredOrders = acceptedOrders.filter((order) => {
+    // University filter
+    if (selectedUniversity !== "All") {
+      // Find vendor for this order
+      const vendor =
+        order.vendorName || (order.packs && order.packs[0]?.vendorName);
+      // Find university for this vendor
+      const vendorObj =
+        vendor && Universities.find((u) => u.name === order.university);
+      if (!vendorObj || vendorObj.name !== selectedUniversity) return false;
+    }
+    const orderDate = new Date(order.createdAt);
+    if (selectedDate) {
+      // If a date is selected, filter by that date
+      const selected = new Date(selectedDate);
+      return (
+        orderDate.getDate() === selected.getDate() &&
+        orderDate.getMonth() === selected.getMonth() &&
+        orderDate.getFullYear() === selected.getFullYear()
+      );
+    }
+    if (feePeriod === "daily") {
+      return orderDate.toDateString() === now.toDateString();
+    } else if (feePeriod === "monthly") {
+      return (
+        orderDate.getMonth() === now.getMonth() &&
+        orderDate.getFullYear() === now.getFullYear()
+      );
+    } else if (feePeriod === "yearly") {
+      return orderDate.getFullYear() === now.getFullYear();
+    }
+    return true;
+  });
+  const totalServiceFee = filteredOrders.reduce(
+    (sum, o) => sum + (o.serviceFee || 0),
+    0
+  );
+  const totalDeliveryFee = filteredOrders.reduce(
+    (sum, o) => sum + (o.deliveryFee || 0),
+    0
+  );
+  const totalRiderFee = filteredOrders.reduce(
+    (sum, o) => sum + (o.deliveryFee || 0) * 0.5,
+    0
+  );
+  // Vendor fee is the subtotal
+  const totalVendorFee = filteredOrders.reduce(
+    (sum, o) => sum + (o.subtotal || 0),
+    0
+  );
+  const totalFee =
+    totalServiceFee + totalDeliveryFee + totalRiderFee + totalVendorFee;
+  const [openNav, setOpenNav] = useState(false);
+
   console.log(allOrder);
 
-  const success = allOrder.filter((item) => item.currentStatus === "Delivered");
-  const pending = allOrder.filter((item) => item.currentStatus === "Pending");
-  const cancelled = allOrder.filter(
-    (item) => item.currentStatus === "Cancelled"
-  );
+  // Apply university filter to status groups
+  const success = allOrder.filter((item) => {
+    if (item.currentStatus !== "Delivered") return false;
+    if (selectedUniversity !== "All") {
+      const vendor =
+        item.vendorName || (item.packs && item.packs[0]?.vendorName);
+      const vendorObj =
+        vendor && Universities.find((u) => u.name === item.university);
+      if (!vendorObj || vendorObj.name !== selectedUniversity) return false;
+    }
+    return true;
+  });
+  const pending = allOrder.filter((item) => {
+    if (item.currentStatus !== "Pending") return false;
+    if (selectedUniversity !== "All") {
+      const vendor =
+        item.vendorName || (item.packs && item.packs[0]?.vendorName);
+      const vendorObj =
+        vendor && Universities.find((u) => u.name === item.university);
+      if (!vendorObj || vendorObj.name !== selectedUniversity) return false;
+    }
+    return true;
+  });
+  const cancelled = allOrder.filter((item) => {
+    if (item.currentStatus !== "Cancelled") return false;
+    if (selectedUniversity !== "All") {
+      const vendor =
+        item.vendorName || (item.packs && item.packs[0]?.vendorName);
+      const vendorObj =
+        vendor && Universities.find((u) => u.name === item.university);
+      if (!vendorObj || vendorObj.name !== selectedUniversity) return false;
+    }
+    return true;
+  });
 
   return (
     <div className="flex w-[100%] justify-between min-h-screen bg-gradient-to-br from-slate-50 via-white to-purple-50/30">
@@ -116,6 +214,117 @@ const Home = () => {
                 <p className="text-3xl font-bold">{cancelled.length}</p>
                 <p className="text-xs text-white/80 mt-1">Declined</p>
               </div>
+            </div>
+          </div>
+          {/* Fee Summary Toggle & Cards (new, isolated section) */}
+
+          <div className="flex flex-wrap gap-2 items-center mb-4">
+            <span className="font-semibold text-gray-700">Fee Summary:</span>
+            <select
+              className="px-2 py-1 rounded-md border text-xs bg-white text-blue-700 border-blue-200 mr-2"
+              value={selectedUniversity}
+              onChange={(e) => setSelectedUniversity(e.target.value)}
+            >
+              <option value="All">All Universities</option>
+              {Universities.map((u) => (
+                <option key={u._id} value={u.name}>
+                  {u.name}
+                </option>
+              ))}
+            </select>
+            <button
+              className={`px-2 py-1 rounded-md border text-xs ${
+                feePeriod === "daily"
+                  ? "bg-blue-100 text-blue-700 border-blue-300"
+                  : "bg-white text-blue-500 border-blue-100"
+              }`}
+              onClick={() => setFeePeriod("daily")}
+            >
+              Daily
+            </button>
+            <button
+              className={`px-2 py-1 rounded-md border text-xs ${
+                feePeriod === "monthly"
+                  ? "bg-green-100 text-green-700 border-green-300"
+                  : "bg-white text-green-500 border-green-100"
+              }`}
+              onClick={() => setFeePeriod("monthly")}
+            >
+              Monthly
+            </button>
+            <button
+              className={`px-2 py-1 rounded-md border text-xs ${
+                feePeriod === "yearly"
+                  ? "bg-purple-100 text-purple-700 border-purple-300"
+                  : "bg-white text-purple-500 border-purple-100"
+              }`}
+              onClick={() => setFeePeriod("yearly")}
+            >
+              Yearly
+            </button>
+            <div className="flex flex-wrap gap-2 items-center w-full sm:w-auto">
+              <input
+                type="date"
+                className="px-2 py-1 rounded-md border text-xs bg-white text-blue-700 border-blue-200"
+                value={selectedDate}
+                onChange={(e) => setSelectedDate(e.target.value)}
+                max={now.toISOString().split("T")[0]}
+              />
+              <button
+                type="button"
+                className="px-2 py-1 rounded-md border text-xs bg-gray-100 text-gray-700 border-gray-300"
+                onClick={() => setSelectedDate("")}
+                disabled={!selectedDate}
+              >
+                Clear
+              </button>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 mb-4">
+            <div className="p-2 rounded-lg border border-blue-200 bg-blue-50 flex flex-col items-center justify-center">
+              <FaRegMoneyBillAlt size={16} className="text-blue-400 mb-1" />
+              <span className="text-xs font-medium text-blue-700">
+                Total Service Fee
+              </span>
+              <span className="text-sm font-bold text-blue-900">
+                ₦{totalServiceFee.toLocaleString()}
+              </span>
+            </div>
+            <div className="p-2 rounded-lg border border-green-200 bg-green-50 flex flex-col items-center justify-center">
+              <IoBagCheck size={16} className="text-green-400 mb-1" />
+              <span className="text-xs font-medium text-green-700">
+                Total Company Fee
+              </span>
+              <span className="text-sm font-bold text-green-900">
+                ₦{totalRiderFee.toLocaleString()}
+              </span>
+            </div>
+            <div className="p-2 rounded-lg border border-amber-200 bg-amber-50 flex flex-col items-center justify-center">
+              <IoCheckmarkDone size={16} className="text-amber-400 mb-1" />
+              <span className="text-xs font-medium text-amber-700">
+                Total Rider Fee
+              </span>
+              <span className="text-sm font-bold text-amber-900">
+                ₦{totalRiderFee.toLocaleString()}
+              </span>
+            </div>
+            <div className="p-2 rounded-lg border border-rose-200 bg-rose-50 flex flex-col items-center justify-center">
+              <SlBell size={16} className="text-rose-400 mb-1" />
+              <span className="text-xs font-medium text-rose-700">
+                Total Vendor Fee
+              </span>
+              <span className="text-sm font-bold text-rose-900">
+                ₦{totalVendorFee.toLocaleString()}
+              </span>
+            </div>
+            <div className="p-2 rounded-lg border border-gray-300 bg-gray-50 flex flex-col items-center justify-center">
+              <FaRegMoneyBillAlt size={16} className="text-gray-400 mb-1" />
+              <span className="text-xs font-medium text-gray-700">
+                Total Fee
+              </span>
+              <span className="text-sm font-bold text-gray-900">
+                ₦{totalFee.toLocaleString()}
+              </span>
             </div>
           </div>
           <div className="mt-7 mb-4">
