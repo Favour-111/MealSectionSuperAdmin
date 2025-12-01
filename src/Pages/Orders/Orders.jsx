@@ -238,9 +238,9 @@ const Orders = () => {
                             <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
                               Pending
                             </span>
-                          ) : item.currentStatus === "Delivering" ? (
+                          ) : item.currentStatus === "Processing" ? (
                             <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                              Delivering
+                              Processing
                             </span>
                           ) : item.currentStatus === "Delivered" ? (
                             <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
