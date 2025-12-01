@@ -18,6 +18,9 @@ import { useAppContext } from "../../components/AppContext";
 import "./Home.css";
 const Home = () => {
   const { Universities, allOrder, allUsers } = useAppContext();
+  const [showAddBalance, setShowAddBalance] = useState(false);
+  // Lazy load AddBalance page
+  const AddBalance = React.lazy(() => import("./AddBalance"));
   const [selectedUniversity, setSelectedUniversity] = useState("All");
   const [feePeriod, setFeePeriod] = useState("daily");
   const [selectedDate, setSelectedDate] = useState("");
@@ -165,6 +168,7 @@ const Home = () => {
                 <h1 className="font-bold text-2xl bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
                   Global Overview
                 </h1>
+
                 <p className="text-sm text-gray-500 mt-1">
                   Monitor platform metrics and university activity
                 </p>

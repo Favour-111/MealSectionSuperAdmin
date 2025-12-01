@@ -3,12 +3,12 @@ import { GrAppsRounded } from "react-icons/gr";
 import { LuNewspaper } from "react-icons/lu";
 import { GrHistory } from "react-icons/gr";
 import { AiOutlineClose } from "react-icons/ai";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { BsBank } from "react-icons/bs";
 import { IoGiftOutline, IoWalletOutline } from "react-icons/io5";
 import { FiSettings } from "react-icons/fi";
 import { MdStorefront } from "react-icons/md";
-import { CiLogout } from "react-icons/ci";
+import { CiLogout, CiMoneyBill } from "react-icons/ci";
 const SideBar = ({ setOpenNav }) => {
   const pathToItem = {
     "/home": "home",
@@ -18,16 +18,17 @@ const SideBar = ({ setOpenNav }) => {
     "/vendors": "vendors",
     "/withdraw": "withdraw",
     "/promotion": "promotion",
+    "/add-balance": "add-balance",
   };
-  const selectedItem = pathToItem[location.pathname] || "home";
   const navigate = useNavigate();
+  const location = useLocation();
+  const selectedItem = pathToItem[location.pathname] || "home";
 
   return (
     <div className="h-screen w-full overflow-y-auto bg-white/80 backdrop-blur-xl border-r border-gray-100 shadow-xl">
       <div className="flex items-center justify-between p-3">
         <img
           src="https://github.com/Favour-111/my-asset/blob/main/images%20(2).jpeg?raw=true"
-          alt="logo"
           className="w-[150px]"
         />
 
@@ -95,6 +96,19 @@ const SideBar = ({ setOpenNav }) => {
         >
           <MdStorefront />
           <div className="text-[13px]">Vendors</div>
+        </div>
+        <div
+          onClick={() => {
+            navigate("/add-balance");
+          }}
+          className={`flex items-center gap-3 h-11 cursor-pointer w-full px-4 rounded-lg mx-2 my-1 transition-all ${
+            selectedItem === "add-balance"
+              ? "bg-indigo-50 text-indigo-700"
+              : "text-gray-700 hover:bg-gray-50"
+          } `}
+        >
+          <CiMoneyBill />
+          <div className="text-[13px]">Add Funds</div>
         </div>
         <div
           onClick={() => {

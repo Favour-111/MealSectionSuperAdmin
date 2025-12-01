@@ -12,6 +12,7 @@ import Promotion from "./Pages/Promotion/Promotion";
 import Fee from "./Pages/Fee/Fee";
 import Vendors from "./Pages/Vendors/Vendors";
 import { Toaster } from "react-hot-toast";
+import AddBalance from "./Pages/AddBalance";
 
 function App() {
   return (
@@ -25,6 +26,7 @@ function App() {
         <Route path="/vendors" element={<Vendors />} />
         <Route path="/Withdraw" element={<WithDraw />} />
         <Route path="/promotion" element={<Promotion />} />
+        <Route path="/add-balance" element={<AddBalance />} />
       </Routes>
       <Toaster />
     </>
