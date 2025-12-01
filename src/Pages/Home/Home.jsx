@@ -17,7 +17,7 @@ import BarChart from "../../components/BarChat/BarChart";
 import { useAppContext } from "../../components/AppContext";
 import "./Home.css";
 const Home = () => {
-  const { Universities, allOrder } = useAppContext();
+  const { Universities, allOrder, allUsers } = useAppContext();
   const [selectedUniversity, setSelectedUniversity] = useState("All");
   const [feePeriod, setFeePeriod] = useState("daily");
   const [selectedDate, setSelectedDate] = useState("");
@@ -86,6 +86,12 @@ const Home = () => {
   );
   const totalFee =
     totalServiceFee + totalDeliveryFee + totalRiderFee + totalVendorFee;
+
+  // Calculate total user balance
+  const totalUserBalance =
+    allUsers && Array.isArray(allUsers)
+      ? allUsers.reduce((sum, user) => sum + (user.availableBal || 0), 0)
+      : 0;
   const [openNav, setOpenNav] = useState(false);
 
   console.log(allOrder);
@@ -324,6 +330,15 @@ const Home = () => {
               </span>
               <span className="text-sm font-bold text-gray-900">
                 ₦{totalFee.toLocaleString()}
+              </span>
+            </div>
+            <div className="p-2 rounded-lg border border-indigo-200 bg-indigo-50 flex flex-col items-center justify-center">
+              <FaRegMoneyBillAlt size={16} className="text-indigo-400 mb-1" />
+              <span className="text-xs font-medium text-indigo-700">
+                Total User Balance
+              </span>
+              <span className="text-sm font-bold text-indigo-900">
+                ₦{totalUserBalance.toLocaleString()}
               </span>
             </div>
           </div>

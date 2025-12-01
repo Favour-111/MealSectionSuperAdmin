@@ -203,6 +203,9 @@ const Universities = () => {
                     <p className="text-xs font-medium text-gray-700">
                       {item.fullName}
                     </p>
+                    <p className="text-xs font-semibold text-indigo-700">
+                      Balance: ₦{(item.availableBal || 0).toLocaleString()}
+                    </p>
                   </div>
                 ))
               ) : (
