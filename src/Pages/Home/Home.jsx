@@ -88,7 +88,7 @@ const Home = () => {
     0
   );
   const totalFee =
-    totalServiceFee + totalDeliveryFee + totalRiderFee + totalVendorFee;
+    totalServiceFee + totalRiderFee + totalRiderFee + totalVendorFee;
 
   // Calculate total user balance
   const totalUserBalance =

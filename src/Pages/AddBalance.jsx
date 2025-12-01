@@ -134,7 +134,11 @@ const AddBalance = () => {
             {message && (
               <div
                 className={`w-full text-center text-sm font-semibold rounded-lg px-4 py-2 mt-2
-                  ${message.startsWith('Error') ? 'bg-red-50 text-red-600 border border-red-200' : 'bg-green-50 text-green-700 border border-green-200'}
+                  ${
+                    message.startsWith("Error")
+                      ? "bg-red-50 text-red-600 border border-red-200"
+                      : "bg-green-50 text-green-700 border border-green-200"
+                  }
                 `}
               >
                 {message}
