@@ -165,6 +165,9 @@ const AddBalance = () => {
                   <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
                     Balance (₦)
                   </th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                    Actions
+                  </th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-100">
@@ -185,6 +188,37 @@ const AddBalance = () => {
                       </td>
                       <td className="px-6 py-4 text-sm font-bold text-blue-700">
                         ₦{user.availableBal?.toLocaleString()}
+                      </td>
+                      <td className="px-6 py-4 text-sm">
+                        <button
+                          className="bg-red-100 text-red-700 px-4 py-2 rounded-lg font-semibold hover:bg-red-200 transition disabled:opacity-60 disabled:cursor-not-allowed"
+                          onClick={async () => {
+                            if (
+                              window.confirm(
+                                `Are you sure you want to delete ${user.fullName}?`
+                              )
+                            ) {
+                              try {
+                                await axios.delete(
+                                  `${
+                                    import.meta.env.VITE_REACT_APP_API
+                                  }/api/users/delete-user/${user._id}`
+                                );
+                                setMessage(
+                                  `User ${user.fullName} deleted successfully.`
+                                );
+                                // Optionally, refresh user list here
+                              } catch (err) {
+                                setMessage(
+                                  "Error: " +
+                                    (err.response?.data?.message || err.message)
+                                );
+                              }
+                            }
+                          }}
+                        >
+                          Delete
+                        </button>
                       </td>
                     </tr>
                   ))
