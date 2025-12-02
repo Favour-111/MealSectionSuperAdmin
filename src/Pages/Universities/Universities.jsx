@@ -312,16 +312,8 @@ const Universities = () => {
             </div>
           </div>
           {selectedRider && (
-            <div className="fixed inset-0 z-5000000 flex justify-center items-center bg-black/40">
-              <div
-                className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md flex flex-col gap-4"
-                style={{
-                  top: "50%",
-                  left: "50%",
-                  transform: "translate(-50%, -50%)",
-                  position: "absolute",
-                }}
-              >
+            <div className="fixed px-5 inset-0 z-50 flex justify-center items-center bg-black/40">
+              <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md flex flex-col gap-4">
                 <div className="flex items-center gap-3 mb-2">
                   <div className="h-12 w-12 bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center rounded-full shadow-lg shadow-orange-500/20">
                     <MdDirectionsBike size={28} className="text-white" />
@@ -330,50 +322,88 @@ const Universities = () => {
                     Rider Details
                   </h3>
                 </div>
-                <div className="grid grid-cols-2 gap-2 text-sm">
+                <div className="grid w-[100%] min-w-0 grid-cols-2 gap-2 text-sm">
                   <span className="font-semibold text-gray-600">ID:</span>
-                  <span className="text-gray-800">{selectedRider._id}</span>
+                  <span className="text-gray-800 break-words truncate min-w-0">
+                    {selectedRider._id}
+                  </span>
                   <span className="font-semibold text-gray-600">Name:</span>
-                  <span className="text-gray-800">
+                  <span className="text-gray-800 break-words truncate min-w-0">
                     {selectedRider.userName}
                   </span>
                   <span className="font-semibold text-gray-600">
                     University:
                   </span>
-                  <span className="text-gray-800">
+                  <span className="text-gray-800 break-words truncate min-w-0">
                     {selectedRider.university}
                   </span>
                   <span className="font-semibold text-gray-600">Email:</span>
-                  <span className="text-gray-800">{selectedRider.email}</span>
+                  <span className="text-gray-800 break-words truncate min-w-0">
+                    {selectedRider.email}
+                  </span>
                   <span className="font-semibold text-gray-600">Phone:</span>
-                  <span className="text-gray-800">
+                  <span className="text-gray-800 break-words truncate min-w-0">
                     {selectedRider.phoneNumber}
                   </span>
                   <span className="font-semibold text-gray-600">Role:</span>
-                  <span className="text-gray-800">{selectedRider.role}</span>
+                  <span className="text-gray-800 break-words truncate min-w-0">
+                    {selectedRider.role}
+                  </span>
                   <span className="font-semibold text-gray-600">Balance:</span>
-                  <span className="text-orange-700 font-bold">
+                  <span className="text-orange-700 font-bold break-words truncate min-w-0">
                     ₦{(selectedRider.availableBal || 0).toLocaleString()}
                   </span>
                   <span className="font-semibold text-gray-600">
                     Created At:
                   </span>
-                  <span className="text-gray-800">
+                  <span className="text-gray-800 break-words truncate min-w-0">
                     {new Date(selectedRider.createdAt).toLocaleString()}
                   </span>
                   <span className="font-semibold text-gray-600">
                     Updated At:
                   </span>
-                  <span className="text-gray-800">
+                  <span className="text-gray-800 break-words truncate min-w-0">
                     {new Date(selectedRider.updatedAt).toLocaleString()}
                   </span>
                 </div>
-                <button
-                  className="mt-4 px-6 py-2 rounded-lg bg-gradient-to-r from-orange-500 to-amber-500 text-white font-bold shadow hover:from-orange-600 hover:to-amber-600 transition mx-auto"
-                  onClick={() => setSelectedRider(null)}
-                >
-                  Close
-                </button>
+                <div className="flex gap-4 mt-4 justify-center">
+                  <button
+                    className="px-6 py-2 rounded-lg bg-gradient-to-r from-orange-500 to-amber-500 text-white font-bold shadow hover:from-orange-600 hover:to-amber-600 transition"
+                    onClick={() => setSelectedRider(null)}
+                  >
+                    Close
+                  </button>
+                  <button
+                    className="px-6 py-2 rounded-lg bg-gradient-to-r from-red-500 to-red-700 text-white font-bold shadow hover:from-red-600 hover:to-red-800 transition"
+                    onClick={async () => {
+                      if (
+                        window.confirm(
+                          `Are you sure you want to delete ${selectedRider.userName}?`
+                        )
+                      ) {
+                        try {
+                          const res = await fetch(
+                            `${
+                              import.meta.env.VITE_REACT_APP_API
+                            }/api/riders/delete-rider/${selectedRider._id}`,
+                            { method: "DELETE" }
+                          );
+                          if (res.ok) {
+                            alert("Rider deleted successfully!");
+                            setSelectedRider(null);
+                            // Optionally, refresh rider list here
+                          } else {
+                            alert("Error deleting rider.");
+                          }
+                        } catch (err) {
+                          alert("Error deleting rider: " + err.message);
+                        }
+                      }
+                    }}
+                  >
+                    Delete Rider
+                  </button>
+                </div>
               </div>
             </div>
           )}
