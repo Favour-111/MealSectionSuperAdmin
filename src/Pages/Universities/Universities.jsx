@@ -244,6 +244,9 @@ const Universities = () => {
                     <p className="text-xs font-medium text-gray-700">
                       {item.storeName}
                     </p>
+                    <p className="text-xs font-semibold text-green-700">
+                      Balance: ₦{(item.availableBal || 0).toLocaleString()}
+                    </p>
                   </div>
                 ))
               ) : (
@@ -284,6 +287,9 @@ const Universities = () => {
                     </div>
                     <p className="text-xs font-medium text-gray-700">
                       {item.userName}
+                    </p>
+                    <p className="text-xs font-semibold text-orange-700">
+                      Balance: ₦{(item.availableBal || 0).toLocaleString()}
                     </p>
                   </div>
                 ))
