@@ -18,7 +18,7 @@ const AddBalance = () => {
     setMessage("");
     try {
       const res = await axios.post(
-        `${import.meta.env.VITE_REACT_APP_API}/api/users/add-balance`,
+        `${import.meta.env.VITE_REACT_APP_API}/api/users/admin/add-funds`,
         {
           userId,
           amount: Number(amount),
