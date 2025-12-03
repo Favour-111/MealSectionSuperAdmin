@@ -166,6 +166,12 @@ const Fee = () => {
                 </p>
               </div>
             </div>
+            <button
+              onClick={() => window.location.reload()}
+              className="ml-2 px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 transition"
+            >
+              Refresh
+            </button>
           </div>
 
           {/* Summary Cards */}

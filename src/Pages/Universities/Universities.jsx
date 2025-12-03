@@ -91,6 +91,14 @@ const Universities = () => {
                 </p>
               </div>
             </div>
+            <div className="flex items-center">
+              <button className="p-2 rounded-full bg-white shadow-md hover:bg-gray-100 transition-all">
+                <SlBell size={18} className="text-gray-700" />
+              </button>
+              <button className="ml-4 p-2 rounded-full bg-white shadow-md hover:bg-gray-100 transition-all">
+                <FiUser size={18} className="text-gray-700" />
+              </button>
+            </div>
           </div>
           {/* University Selector */}
           <div className="mb-5">
@@ -203,6 +211,10 @@ const Universities = () => {
                     </div>
                     <p className="text-xs font-medium text-gray-700">
                       {item.fullName}
+                    </p>
+
+                    <p className="text-xs font-medium text-gray-700">
+                      {item.email}
                     </p>
                     <p className="text-xs font-semibold text-indigo-700">
                       Balance: ₦{(item.availableBal || 0).toLocaleString()}

@@ -15,12 +15,34 @@ const Orders = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [ongoingPage, setOngoingPage] = useState(1);
   const [deliveredPage, setDeliveredPage] = useState(1);
+  const [selectedDate, setSelectedDate] = useState(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return today;
+  });
   const itemsPerPage = 10;
 
-  // 🧠 Filter orders by selected university and reverse to show newest first
+  // Calendar filter: only show orders for selected date
   const filteredOrders = selected
-    ? [...allOrder].filter((order) => order.university === selected).reverse()
-    : [...allOrder].reverse();
+    ? [...allOrder]
+        .filter((order) => {
+          const orderDate = order.createdAt ? new Date(order.createdAt) : null;
+          if (!orderDate) return false;
+          orderDate.setHours(0, 0, 0, 0);
+          return (
+            order.university === selected &&
+            orderDate.getTime() === selectedDate.getTime()
+          );
+        })
+        .reverse()
+    : [...allOrder]
+        .filter((order) => {
+          const orderDate = order.createdAt ? new Date(order.createdAt) : null;
+          if (!orderDate) return false;
+          orderDate.setHours(0, 0, 0, 0);
+          return orderDate.getTime() === selectedDate.getTime();
+        })
+        .reverse();
 
   // Derived stats (based on the filtered list)
   const success = filteredOrders.filter(
@@ -101,6 +123,12 @@ const Orders = () => {
                 </p>
               </div>
             </div>
+            <button
+              onClick={() => window.location.reload()}
+              className="ml-2 px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 transition"
+            >
+              Refresh
+            </button>
           </div>
 
           {/* Filter */}
@@ -122,6 +150,22 @@ const Orders = () => {
                 </option>
               ))}
             </select>
+          </div>
+
+          {/* Calendar Date Picker */}
+          <div className="mb-6 flex items-center gap-3">
+            <label className="font-semibold text-gray-700">Select Date:</label>
+            <input
+              type="date"
+              value={selectedDate.toISOString().slice(0, 10)}
+              onChange={(e) => {
+                const d = new Date(e.target.value);
+                d.setHours(0, 0, 0, 0);
+                setSelectedDate(d);
+                setCurrentPage(1);
+              }}
+              className="border rounded px-2 py-1 text-sm"
+            />
           </div>
 
           {/* Summary Cards */}

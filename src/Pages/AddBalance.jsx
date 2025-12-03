@@ -35,6 +35,29 @@ const AddBalance = () => {
     setLoading(false);
   };
 
+  const handleRemoveFunds = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setMessage("");
+    try {
+      const res = await axios.post(
+        `${import.meta.env.VITE_REACT_APP_API}/api/users/admin/remove-funds`,
+        {
+          userId,
+          amount: Number(amount),
+        }
+      );
+      setMessage(
+        res.data.success
+          ? `Funds removed! New balance: ₦${res.data.user.availableBal}`
+          : "Failed to remove funds."
+      );
+    } catch (err) {
+      setMessage("Error: " + (err.response?.data?.message || err.message));
+    }
+    setLoading(false);
+  };
+
   return (
     <div className="flex w-[100%] justify-between min-h-screen bg-gradient-to-br from-slate-50 via-white to-purple-50/30">
       {openNav && (
@@ -145,10 +168,96 @@ const AddBalance = () => {
               </div>
             )}
           </form>
+          <div className="mt-8">
+            <h3 className="font-bold text-lg mb-2">Remove Funds from User</h3>
+            <form
+              onSubmit={handleRemoveFunds}
+              className="w-full mb-8 bg-white/90 p-4 sm:p-6 md:p-8 rounded-2xl shadow-sm border border-gray-100 flex flex-col md:flex-row md:items-end gap-4 sm:gap-6 md:gap-8"
+            >
+              <div className="flex-1 min-w-[220px]">
+                <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+                  <span className="inline-block bg-blue-100 text-blue-700 rounded-full p-1">
+                    <IoWalletOutline size={16} />
+                  </span>
+                  Select User
+                </label>
+                <select
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 sm:px-4 sm:py-3 focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
+                  value={userId}
+                  onChange={(e) => setUserId(e.target.value)}
+                  required
+                >
+                  <option value="">-- Select User --</option>
+                  {allUsers?.map((user) => (
+                    <option key={user._id} value={user._id}>
+                      {user.fullName} ({user.email})
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex-1 min-w-[120px]">
+                <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+                  <span className="inline-block bg-purple-100 text-purple-700 rounded-full p-1">
+                    ₦
+                  </span>
+                  Amount
+                </label>
+                <input
+                  type="number"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 sm:px-4 sm:py-3 focus:outline-none focus:ring-2 focus:ring-purple-400 transition"
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                  min="1"
+                  required
+                  placeholder="Enter amount"
+                />
+              </div>
+              <button
+                type="submit"
+                className="bg-gradient-to-r from-red-600 to-red-800 text-white py-2 px-6 sm:py-3 sm:px-8 rounded-xl font-bold text-base shadow-lg hover:from-red-700 hover:to-red-900 transition-all flex items-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed h-fit w-full md:w-fit"
+                disabled={loading}
+              >
+                {loading ? (
+                  <>
+                    <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                    Removing...
+                  </>
+                ) : (
+                  <>
+                    <IoWalletOutline size={20} />
+                    Remove Funds
+                  </>
+                )}
+              </button>
+              {message && (
+                <div
+                  className={`w-full text-center text-sm font-semibold rounded-lg px-4 py-2 mt-2
+                  ${
+                    message.startsWith("Error")
+                      ? "bg-red-50 text-red-600 border border-red-200"
+                      : "bg-green-50 text-green-700 border border-green-200"
+                  }
+                `}
+                >
+                  {message}
+                </div>
+              )}
+            </form>
+          </div>
           <h2 className="font-bold text-lg text-gray-900 flex items-center gap-2 mb-3">
             <div className="w-1 h-5 bg-gray-500 rounded-full" />
             All Users & Balances
           </h2>
+          <div className="flex justify-between items-center mb-4">
+            <div className="flex gap-2">
+              <button
+                onClick={() => window.location.reload()}
+                className="ml-2 px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 transition"
+              >
+                Refresh
+              </button>
+            </div>
+          </div>
           <div className="overflow-x-auto">
             <table className="min-w-full">
               <thead className="bg-gradient-to-r from-gray-50 to-slate-50">
