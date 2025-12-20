@@ -6,21 +6,47 @@ import { IoMenu, IoWalletOutline } from "react-icons/io5";
 
 const AddBalance = () => {
   const { allUsers } = useAppContext();
-  const [userId, setUserId] = useState("");
+  const [userSearch, setUserSearch] = useState("");
+  const [userResults, setUserResults] = useState([]);
+  const [selectedUser, setSelectedUser] = useState(null);
   const [amount, setAmount] = useState("");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [openNav, setOpenNav] = useState(false);
+
+  // Live search for users by email
+  const handleUserSearch = (e) => {
+    const val = e.target.value;
+    setUserSearch(val);
+    setSelectedUser(null);
+    setMessage("");
+    if (val.length < 2) {
+      setUserResults([]);
+      return;
+    }
+    const filtered = allUsers.filter((u) =>
+      u.email.toLowerCase().includes(val.toLowerCase())
+    );
+    setUserResults(filtered);
+  };
+
+  const handleSelectUser = (user) => {
+    setSelectedUser(user);
+    setUserSearch(user.email);
+    setUserResults([]);
+    setMessage("");
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setMessage("");
     try {
+      if (!selectedUser) throw new Error("Select a user");
       const res = await axios.post(
         `${import.meta.env.VITE_REACT_APP_API}/api/users/admin/add-funds`,
         {
-          userId,
+          userId: selectedUser._id,
           amount: Number(amount),
         }
       );
@@ -40,10 +66,11 @@ const AddBalance = () => {
     setLoading(true);
     setMessage("");
     try {
+      if (!selectedUser) throw new Error("Select a user");
       const res = await axios.post(
         `${import.meta.env.VITE_REACT_APP_API}/api/users/admin/remove-funds`,
         {
-          userId,
+          userId: selectedUser._id,
           amount: Number(amount),
         }
       );
@@ -99,26 +126,44 @@ const AddBalance = () => {
             onSubmit={handleSubmit}
             className="w-full mb-8 bg-white/90 p-4 sm:p-6 md:p-8 rounded-2xl shadow-sm border border-gray-100 flex flex-col md:flex-row md:items-end gap-4 sm:gap-6 md:gap-8"
           >
-            <div className="flex-1 min-w-[220px]">
+            <div className="flex-1 min-w-[220px] relative">
               <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
                 <span className="inline-block bg-blue-100 text-blue-700 rounded-full p-1">
                   <IoWalletOutline size={16} />
                 </span>
-                Select User
+                Search User by Email
               </label>
-              <select
+              <input
+                type="text"
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 sm:px-4 sm:py-3 focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
-                value={userId}
-                onChange={(e) => setUserId(e.target.value)}
+                value={userSearch}
+                onChange={handleUserSearch}
+                placeholder="Type email..."
+                autoComplete="off"
                 required
-              >
-                <option value="">-- Select User --</option>
-                {allUsers?.map((user) => (
-                  <option key={user._id} value={user._id}>
-                    {user.fullName} ({user.email})
-                  </option>
-                ))}
-              </select>
+                disabled={loading}
+              />
+              {userResults.length > 0 && !selectedUser && (
+                <div className="absolute left-0 right-0 bg-white border border-gray-200 rounded-lg shadow z-10 max-h-40 overflow-y-auto mt-1">
+                  {userResults.map((user) => (
+                    <div
+                      key={user._id}
+                      className="px-3 py-2 cursor-pointer hover:bg-blue-50 text-sm"
+                      onClick={() => handleSelectUser(user)}
+                    >
+                      {user.email}{" "}
+                      <span className="text-gray-400">({user.fullName})</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {selectedUser && (
+                <div className="text-xs text-gray-500 mt-1">
+                  Selected: {selectedUser.fullName} ({selectedUser.email})<br />
+                  Current Balance: ₦
+                  {selectedUser.availableBal?.toLocaleString?.() ?? 0}
+                </div>
+              )}
             </div>
             <div className="flex-1 min-w-[120px]">
               <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
@@ -136,6 +181,19 @@ const AddBalance = () => {
                 required
                 placeholder="Enter amount"
               />
+              {message && (
+                <div
+                  className={`w-full text-center text-sm font-semibold rounded-lg px-4 py-2 mt-2
+                    ${
+                      message.startsWith("Error")
+                        ? "bg-red-50 text-red-600 border border-red-200"
+                        : "bg-green-50 text-green-700 border border-green-200"
+                    }
+                  `}
+                >
+                  {message}
+                </div>
+              )}
             </div>
             <button
               type="submit"
@@ -154,19 +212,6 @@ const AddBalance = () => {
                 </>
               )}
             </button>
-            {message && (
-              <div
-                className={`w-full text-center text-sm font-semibold rounded-lg px-4 py-2 mt-2
-                  ${
-                    message.startsWith("Error")
-                      ? "bg-red-50 text-red-600 border border-red-200"
-                      : "bg-green-50 text-green-700 border border-green-200"
-                  }
-                `}
-              >
-                {message}
-              </div>
-            )}
           </form>
           <div className="mt-8">
             <h3 className="font-bold text-lg mb-2">Remove Funds from User</h3>
@@ -174,26 +219,45 @@ const AddBalance = () => {
               onSubmit={handleRemoveFunds}
               className="w-full mb-8 bg-white/90 p-4 sm:p-6 md:p-8 rounded-2xl shadow-sm border border-gray-100 flex flex-col md:flex-row md:items-end gap-4 sm:gap-6 md:gap-8"
             >
-              <div className="flex-1 min-w-[220px]">
+              <div className="flex-1 min-w-[220px] relative">
                 <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
                   <span className="inline-block bg-blue-100 text-blue-700 rounded-full p-1">
                     <IoWalletOutline size={16} />
                   </span>
-                  Select User
+                  Search User by Email
                 </label>
-                <select
+                <input
+                  type="text"
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 sm:px-4 sm:py-3 focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
-                  value={userId}
-                  onChange={(e) => setUserId(e.target.value)}
+                  value={userSearch}
+                  onChange={handleUserSearch}
+                  placeholder="Type email..."
+                  autoComplete="off"
                   required
-                >
-                  <option value="">-- Select User --</option>
-                  {allUsers?.map((user) => (
-                    <option key={user._id} value={user._id}>
-                      {user.fullName} ({user.email})
-                    </option>
-                  ))}
-                </select>
+                  disabled={loading}
+                />
+                {userResults.length > 0 && !selectedUser && (
+                  <div className="absolute left-0 right-0 bg-white border border-gray-200 rounded-lg shadow z-10 max-h-40 overflow-y-auto mt-1">
+                    {userResults.map((user) => (
+                      <div
+                        key={user._id}
+                        className="px-3 py-2 cursor-pointer hover:bg-blue-50 text-sm"
+                        onClick={() => handleSelectUser(user)}
+                      >
+                        {user.email}{" "}
+                        <span className="text-gray-400">({user.fullName})</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {selectedUser && (
+                  <div className="text-xs text-gray-500 mt-1">
+                    Selected: {selectedUser.fullName} ({selectedUser.email})
+                    <br />
+                    Current Balance: ₦
+                    {selectedUser.availableBal?.toLocaleString?.() ?? 0}
+                  </div>
+                )}
               </div>
               <div className="flex-1 min-w-[120px]">
                 <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
@@ -211,11 +275,24 @@ const AddBalance = () => {
                   required
                   placeholder="Enter amount"
                 />
+                {message && (
+                  <div
+                    className={`w-full text-center text-sm font-semibold rounded-lg px-4 py-2 mt-2
+                      ${
+                        message.startsWith("Error")
+                          ? "bg-red-50 text-red-600 border border-red-200"
+                          : "bg-green-50 text-green-700 border border-green-200"
+                      }
+                    `}
+                  >
+                    {message}
+                  </div>
+                )}
               </div>
               <button
                 type="submit"
                 className="bg-gradient-to-r from-red-600 to-red-800 text-white py-2 px-6 sm:py-3 sm:px-8 rounded-xl font-bold text-base shadow-lg hover:from-red-700 hover:to-red-900 transition-all flex items-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed h-fit w-full md:w-fit"
-                disabled={loading}
+                disabled={loading || !selectedUser}
               >
                 {loading ? (
                   <>
@@ -229,19 +306,6 @@ const AddBalance = () => {
                   </>
                 )}
               </button>
-              {message && (
-                <div
-                  className={`w-full text-center text-sm font-semibold rounded-lg px-4 py-2 mt-2
-                  ${
-                    message.startsWith("Error")
-                      ? "bg-red-50 text-red-600 border border-red-200"
-                      : "bg-green-50 text-green-700 border border-green-200"
-                  }
-                `}
-                >
-                  {message}
-                </div>
-              )}
             </form>
           </div>
           <h2 className="font-bold text-lg text-gray-900 flex items-center gap-2 mb-3">

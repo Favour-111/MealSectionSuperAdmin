@@ -79,6 +79,8 @@ const WithDraw = () => {
           date: new Date(v.createdAt).toLocaleDateString(),
           type: "vendor",
           university: getVendorUniversity(v.vendorId?._id || v.vendorId),
+          vendorId: v.vendorId?._id || v.vendorId, // Always include vendorId for Details button
+          vendorName: v.vendorName || undefined,
         }));
 
         setWithdrawals([...riderData, ...vendorData]);
@@ -92,7 +94,19 @@ const WithDraw = () => {
 
     fetchAll();
   }, []);
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [detailsData, setDetailsData] = useState(null);
 
+  // Fetch vendor bank info and show modal
+  const handleShowDetails = async (vendorId, amount) => {
+    try {
+      const res = await axios.get(`${API}/api/vendors/${vendorId}/bank-info`);
+      setDetailsData({ ...res.data, amount });
+      setShowDetailsModal(true);
+    } catch (err) {
+      toast.error("Failed to fetch bank info");
+    }
+  };
   const handleStatusUpdate = async (id, action, type) => {
     try {
       setActionLoading((prev) => ({ ...prev, [id]: action }));
@@ -397,6 +411,38 @@ const WithDraw = () => {
                           </td>
                           <td className="px-6 py-4">
                             <div className="flex gap-2">
+                              {item.role === "Vendor" && (
+                                <button
+                                  onClick={() => {
+                                    let vendorId;
+                                    if (
+                                      item.vendorId &&
+                                      typeof item.vendorId === "object" &&
+                                      item.vendorId._id
+                                    ) {
+                                      vendorId = item.vendorId._id;
+                                    } else if (item.vendorId) {
+                                      vendorId = item.vendorId;
+                                    } else if (item.vendorName) {
+                                      // fallback: try to find vendor by name
+                                      const found = vendors.find(
+                                        (v) => v.storeName === item.vendorName
+                                      );
+                                      vendorId = found ? found._id : undefined;
+                                    }
+                                    if (!vendorId) {
+                                      toast.error(
+                                        "Vendor ID not found for this withdrawal."
+                                      );
+                                      return;
+                                    }
+                                    handleShowDetails(vendorId, item.amount);
+                                  }}
+                                  className="px-4 py-1.5 rounded-lg bg-blue-100 text-blue-700 text-xs font-medium border border-blue-200 hover:bg-blue-200 transition-colors"
+                                >
+                                  Details
+                                </button>
+                              )}
                               <button
                                 onClick={() =>
                                   handleStatusUpdate(
@@ -485,6 +531,53 @@ const WithDraw = () => {
                               </button>
                             </div>
                           </td>
+                          {/* Details Modal for Vendor Withdrawals */}
+                          {showDetailsModal && detailsData && (
+                            <div className="fixed inset-0 z-50 flex justify-center items-center bg-black/40">
+                              <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md flex flex-col gap-4">
+                                <h3 className="font-bold text-xl text-gray-800 mb-2">
+                                  Withdrawal Details
+                                </h3>
+                                <div className="grid w-[100%] min-w-0 grid-cols-2 gap-2 text-sm">
+                                  <span className="font-semibold text-gray-600">
+                                    Account Name:
+                                  </span>
+                                  <span className="text-gray-800 break-words truncate min-w-0">
+                                    {detailsData.bankAccountName || "N/A"}
+                                  </span>
+                                  <span className="font-semibold text-gray-600">
+                                    Account Number:
+                                  </span>
+                                  <span className="text-gray-800 break-words truncate min-w-0">
+                                    {detailsData.bankAccountNumber || "N/A"}
+                                  </span>
+                                  <span className="font-semibold text-gray-600">
+                                    Bank Name:
+                                  </span>
+                                  <span className="text-gray-800 break-words truncate min-w-0">
+                                    {detailsData.bankName || "N/A"}
+                                  </span>
+                                  <span className="font-semibold text-gray-600">
+                                    Amount:
+                                  </span>
+                                  <span className="text-gray-800 break-words truncate min-w-0">
+                                    ₦
+                                    {Number(
+                                      detailsData.amount
+                                    ).toLocaleString()}
+                                  </span>
+                                </div>
+                                <div className="flex gap-4 mt-4 justify-center">
+                                  <button
+                                    className="px-6 py-2 rounded-lg bg-gradient-to-r from-blue-500 to-blue-700 text-white font-bold shadow hover:from-blue-600 hover:to-blue-800 transition"
+                                    onClick={() => setShowDetailsModal(false)}
+                                  >
+                                    Close
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          )}
                         </tr>
                       ))
                     )}

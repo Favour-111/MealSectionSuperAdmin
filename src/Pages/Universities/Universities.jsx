@@ -219,6 +219,11 @@ const Universities = () => {
                     <p className="text-xs font-semibold text-indigo-700">
                       Balance: ₦{(item.availableBal || 0).toLocaleString()}
                     </p>
+                    {item.valid === true && (
+                      <p className="text-[10px] text-indigo-600 font-bold mt-1">
+                        Valid
+                      </p>
+                    )}
                   </div>
                 ))
               ) : (
@@ -260,6 +265,15 @@ const Universities = () => {
                     <p className="text-xs font-semibold text-green-700">
                       Balance: ₦{(item.availableBal || 0).toLocaleString()}
                     </p>
+                    {item.valid === true ? (
+                      <p className="text-[10px] text-green-600 bg-green-200  px-2 rounded-3xl font-bold mt-1">
+                        Valid
+                      </p>
+                    ) : (
+                      <p className="text-[10px] bg-red-200  px-2 rounded-3xl  text-red-600 font-bold mt-1">
+                        Invalid
+                      </p>
+                    )}
                   </div>
                 ))
               ) : (
@@ -306,6 +320,15 @@ const Universities = () => {
                       <p className="text-xs font-semibold text-orange-700">
                         Balance: ₦{(item.availableBal || 0).toLocaleString()}
                       </p>
+                      {item.valid === true ? (
+                        <p className="text-[10px] text-orange-600 bg-orange-200  px-2 rounded-3xl font-bold mt-1">
+                          Valid
+                        </p>
+                      ) : (
+                        <p className="text-[10px] bg-red-200  px-2 rounded-3xl  text-red-600 font-bold mt-1">
+                          Invalid
+                        </p>
+                      )}
                     </div>
                   ))}
                   {/* Rider Details Modal */}
