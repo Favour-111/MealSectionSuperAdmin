@@ -37,6 +37,8 @@ const Home = () => {
       )
     : [];
   const now = new Date();
+  console.log(allOrder);
+
   const filteredOrders = acceptedOrders.filter((order) => {
     // University filter
     if (selectedUniversity !== "All") {

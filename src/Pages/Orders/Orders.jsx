@@ -274,8 +274,7 @@ const Orders = () => {
                             : "N/A"}
                         </td>
                         <td className="px-6 py-4 text-sm text-gray-900">
-                          {allUsers?.find((itm) => itm?._id === item.userId)
-                            ?.fullName || "Unknown User"}
+                          {item?.userId.fullName || "Unknown User"}
                         </td>
                         <td className="px-6 py-4 text-sm">
                           {item.currentStatus === "Pending" ? (
@@ -381,8 +380,7 @@ const Orders = () => {
                               : "N/A"}
                           </td>
                           <td className="px-6 py-4 text-sm text-gray-900">
-                            {allUsers?.find((itm) => itm?._id === item.userId)
-                              ?.fullName || "Unknown User"}
+                            {item?.userId.fullName || "Unknown User"}
                           </td>
                           <td className="px-6 py-4 text-sm">
                             <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
@@ -521,8 +519,7 @@ const Orders = () => {
                             : "N/A"}
                         </td>
                         <td className="px-6 py-4 text-sm text-gray-900">
-                          {allUsers?.find((itm) => itm?._id === item.userId)
-                            ?.fullName || "Unknown User"}
+                          {item?.userId.fullName || "Unknown User"}
                         </td>
                         <td className="px-6 py-4 text-sm">
                           <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
