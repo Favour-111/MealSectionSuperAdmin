@@ -2,10 +2,18 @@ import React, { useState } from "react";
 import axios from "axios";
 import { useAppContext } from "../components/AppContext";
 import SideBar from "../components/SideBar/SideBar";
-import { IoMenu, IoWalletOutline } from "react-icons/io5";
+import {
+  IoMenu,
+  IoWalletOutline,
+  IoPersonOutline,
+  IoBicycleOutline,
+  IoStorefrontOutline,
+} from "react-icons/io5";
+import { FiPlus, FiMinus } from "react-icons/fi";
 
 const AddBalance = () => {
-  const { allUsers } = useAppContext();
+  const { allUsers, riders, vendors } = useAppContext();
+  const [activeTab, setActiveTab] = useState("users");
   const [userSearch, setUserSearch] = useState("");
   const [userResults, setUserResults] = useState([]);
   const [selectedUser, setSelectedUser] = useState(null);
@@ -14,7 +22,49 @@ const AddBalance = () => {
   const [message, setMessage] = useState("");
   const [openNav, setOpenNav] = useState(false);
 
-  // Live search for users by email
+  // Get current data based on active tab
+  const getCurrentData = () => {
+    switch (activeTab) {
+      case "users":
+        return allUsers || [];
+      case "riders":
+        return riders || [];
+      case "vendors":
+        return vendors || [];
+      default:
+        return [];
+    }
+  };
+
+  // Get search field name based on tab
+  const getSearchField = () => {
+    switch (activeTab) {
+      case "users":
+        return "email";
+      case "riders":
+        return "email";
+      case "vendors":
+        return "email";
+      default:
+        return "email";
+    }
+  };
+
+  // Get display name based on tab
+  const getDisplayName = (item) => {
+    switch (activeTab) {
+      case "users":
+        return item.fullName;
+      case "riders":
+        return item.userName;
+      case "vendors":
+        return item.storeName;
+      default:
+        return "";
+    }
+  };
+
+  // Live search for users/riders/vendors by email
   const handleUserSearch = (e) => {
     const val = e.target.value;
     setUserSearch(val);
@@ -24,8 +74,9 @@ const AddBalance = () => {
       setUserResults([]);
       return;
     }
-    const filtered = allUsers.filter((u) =>
-      u.email.toLowerCase().includes(val.toLowerCase())
+    const currentData = getCurrentData();
+    const filtered = currentData.filter((item) =>
+      item[getSearchField()].toLowerCase().includes(val.toLowerCase())
     );
     setUserResults(filtered);
   };
@@ -37,24 +88,62 @@ const AddBalance = () => {
     setMessage("");
   };
 
+  // Reset state when changing tabs
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+    setUserSearch("");
+    setUserResults([]);
+    setSelectedUser(null);
+    setAmount("");
+    setMessage("");
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setMessage("");
     try {
-      if (!selectedUser) throw new Error("Select a user");
-      const res = await axios.post(
-        `${import.meta.env.VITE_REACT_APP_API}/api/users/admin/add-funds`,
-        {
-          userId: selectedUser._id,
-          amount: Number(amount),
-        }
-      );
+      if (!selectedUser) throw new Error("Select an entity");
+
+      let endpoint = "";
+      let payload = {};
+
+      switch (activeTab) {
+        case "users":
+          endpoint = `${
+            import.meta.env.VITE_REACT_APP_API
+          }/api/users/admin/add-funds`;
+          payload = { userId: selectedUser._id, amount: Number(amount) };
+          break;
+        case "riders":
+          endpoint = `${import.meta.env.VITE_REACT_APP_API}/api/riders/${
+            selectedUser._id
+          }/add-funds`;
+          payload = { amount: Number(amount) };
+          break;
+        case "vendors":
+          endpoint = `${import.meta.env.VITE_REACT_APP_API}/api/vendors/${
+            selectedUser._id
+          }/add-funds`;
+          payload = { amount: Number(amount) };
+          break;
+        default:
+          throw new Error("Invalid tab");
+      }
+
+      const res = await axios.post(endpoint, payload);
+      const newBalance =
+        res.data.user?.availableBal ||
+        res.data.rider?.availableBal ||
+        res.data.vendor?.availableBal;
       setMessage(
-        res.data.success
-          ? `Balance added! New balance: ₦${res.data.user.availableBal}`
+        res.data.success || res.data.message
+          ? `Balance added! New balance: ₦${newBalance?.toLocaleString()}`
           : "Failed to add balance."
       );
+
+      // Refresh the selected user data
+      setTimeout(() => window.location.reload(), 1500);
     } catch (err) {
       setMessage("Error: " + (err.response?.data?.message || err.message));
     }
@@ -66,19 +155,47 @@ const AddBalance = () => {
     setLoading(true);
     setMessage("");
     try {
-      if (!selectedUser) throw new Error("Select a user");
-      const res = await axios.post(
-        `${import.meta.env.VITE_REACT_APP_API}/api/users/admin/remove-funds`,
-        {
-          userId: selectedUser._id,
-          amount: Number(amount),
-        }
-      );
+      if (!selectedUser) throw new Error("Select an entity");
+
+      let endpoint = "";
+      let payload = {};
+
+      switch (activeTab) {
+        case "users":
+          endpoint = `${
+            import.meta.env.VITE_REACT_APP_API
+          }/api/users/admin/remove-funds`;
+          payload = { userId: selectedUser._id, amount: Number(amount) };
+          break;
+        case "riders":
+          endpoint = `${import.meta.env.VITE_REACT_APP_API}/api/riders/${
+            selectedUser._id
+          }/remove-funds`;
+          payload = { amount: Number(amount) };
+          break;
+        case "vendors":
+          endpoint = `${import.meta.env.VITE_REACT_APP_API}/api/vendors/${
+            selectedUser._id
+          }/remove-funds`;
+          payload = { amount: Number(amount) };
+          break;
+        default:
+          throw new Error("Invalid tab");
+      }
+
+      const res = await axios.post(endpoint, payload);
+      const newBalance =
+        res.data.user?.availableBal ||
+        res.data.rider?.availableBal ||
+        res.data.vendor?.availableBal;
       setMessage(
-        res.data.success
-          ? `Funds removed! New balance: ₦${res.data.user.availableBal}`
+        res.data.success || res.data.message
+          ? `Funds removed! New balance: ₦${newBalance?.toLocaleString()}`
           : "Failed to remove funds."
       );
+
+      // Refresh the selected user data
+      setTimeout(() => window.location.reload(), 1500);
     } catch (err) {
       setMessage("Error: " + (err.response?.data?.message || err.message));
     }
@@ -86,7 +203,7 @@ const AddBalance = () => {
   };
 
   return (
-    <div className="flex w-[100%] justify-between min-h-screen bg-gradient-to-br from-slate-50 via-white to-purple-50/30">
+    <div className="flex w-[100%] justify-between min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50/30">
       {openNav && (
         <div
           className="fixed inset-0 bg-black/40 z-40 md:hidden"
@@ -104,6 +221,7 @@ const AddBalance = () => {
 
       <div className="flex-1 md:ml-[240px] w-full min-h-screen overflow-y-auto">
         <div className="md:p-6 px-5 mt-3 pb-10">
+          {/* Header */}
           <div className="flex items-center justify-between mb-6">
             <div className="flex gap-4 items-center">
               <button
@@ -113,305 +231,387 @@ const AddBalance = () => {
                 <IoMenu size={18} className="text-blue-700" />
               </button>
               <div>
-                <h1 className="font-bold text-2xl bg-gradient-to-r from-blue-900 to-purple-600 bg-clip-text text-transparent">
-                  Add Balance to User Wallet
+                <h1 className="font-bold text-2xl md:text-3xl bg-gradient-to-r from-blue-900 to-purple-600 bg-clip-text text-transparent">
+                  Balance Management
                 </h1>
                 <p className="text-sm text-gray-500 mt-1">
-                  Top up any user's wallet instantly
+                  Manage wallet balances for users, riders, and vendors
                 </p>
               </div>
             </div>
           </div>
-          <form
-            onSubmit={handleSubmit}
-            className="w-full mb-8 bg-white/90 p-4 sm:p-6 md:p-8 rounded-2xl shadow-sm border border-gray-100 flex flex-col md:flex-row md:items-end gap-4 sm:gap-6 md:gap-8"
-          >
-            <div className="flex-1 min-w-[220px] relative">
-              <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
-                <span className="inline-block bg-blue-100 text-blue-700 rounded-full p-1">
-                  <IoWalletOutline size={16} />
-                </span>
-                Search User by Email
-              </label>
-              <input
-                type="text"
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 sm:px-4 sm:py-3 focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
-                value={userSearch}
-                onChange={handleUserSearch}
-                placeholder="Type email..."
-                autoComplete="off"
-                required
-                disabled={loading}
-              />
-              {userResults.length > 0 && !selectedUser && (
-                <div className="absolute left-0 right-0 bg-white border border-gray-200 rounded-lg shadow z-10 max-h-40 overflow-y-auto mt-1">
-                  {userResults.map((user) => (
-                    <div
-                      key={user._id}
-                      className="px-3 py-2 cursor-pointer hover:bg-blue-50 text-sm"
-                      onClick={() => handleSelectUser(user)}
-                    >
-                      {user.email}{" "}
-                      <span className="text-gray-400">({user.fullName})</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-              {selectedUser && (
-                <div className="text-xs text-gray-500 mt-1">
-                  Selected: {selectedUser.fullName} ({selectedUser.email})<br />
-                  Current Balance: ₦
-                  {selectedUser.availableBal?.toLocaleString?.() ?? 0}
-                </div>
-              )}
+
+          {/* Tabs */}
+          <div className="mb-6 bg-white/80 backdrop-blur-sm rounded-2xl p-2 shadow-sm border border-gray-100">
+            <div className="flex gap-2">
+              <button
+                onClick={() => handleTabChange("users")}
+                className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-semibold text-sm transition-all ${
+                  activeTab === "users"
+                    ? "bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg shadow-blue-200"
+                    : "text-gray-600 hover:bg-gray-50"
+                }`}
+              >
+                <IoPersonOutline size={20} />
+                Users
+              </button>
+              <button
+                onClick={() => handleTabChange("riders")}
+                className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-semibold text-sm transition-all ${
+                  activeTab === "riders"
+                    ? "bg-gradient-to-r from-green-600 to-green-700 text-white shadow-lg shadow-green-200"
+                    : "text-gray-600 hover:bg-gray-50"
+                }`}
+              >
+                <IoBicycleOutline size={20} />
+                Riders
+              </button>
+              <button
+                onClick={() => handleTabChange("vendors")}
+                className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-semibold text-sm transition-all ${
+                  activeTab === "vendors"
+                    ? "bg-gradient-to-r from-purple-600 to-purple-700 text-white shadow-lg shadow-purple-200"
+                    : "text-gray-600 hover:bg-gray-50"
+                }`}
+              >
+                <IoStorefrontOutline size={20} />
+                Vendors
+              </button>
             </div>
-            <div className="flex-1 min-w-[120px]">
-              <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
-                <span className="inline-block bg-purple-100 text-purple-700 rounded-full p-1">
-                  ₦
-                </span>
-                Amount
-              </label>
-              <input
-                type="number"
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 sm:px-4 sm:py-3 focus:outline-none focus:ring-2 focus:ring-purple-400 transition"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                min="1"
-                required
-                placeholder="Enter amount"
-              />
-              {message && (
-                <div
-                  className={`w-full text-center text-sm font-semibold rounded-lg px-4 py-2 mt-2
-                    ${
-                      message.startsWith("Error")
-                        ? "bg-red-50 text-red-600 border border-red-200"
-                        : "bg-green-50 text-green-700 border border-green-200"
-                    }
-                  `}
-                >
-                  {message}
-                </div>
-              )}
-            </div>
-            <button
-              type="submit"
-              className="bg-gradient-to-r from-blue-600 to-purple-600 text-white py-2 px-6 sm:py-3 sm:px-8 rounded-xl font-bold text-base shadow-lg hover:from-blue-700 hover:to-purple-700 transition-all flex items-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed h-fit w-full md:w-fit"
-              disabled={loading}
-            >
-              {loading ? (
-                <>
-                  <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-                  Adding...
-                </>
-              ) : (
-                <>
-                  <IoWalletOutline size={20} />
-                  Add Balance
-                </>
-              )}
-            </button>
-          </form>
-          <div className="mt-8">
-            <h3 className="font-bold text-lg mb-2">Remove Funds from User</h3>
+          </div>
+
+          {/* Add Funds Section */}
+          <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-sm border border-gray-100 p-6 mb-6 overflow-visible">
+            <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+              <div
+                className={`p-2 rounded-xl ${
+                  activeTab === "users"
+                    ? "bg-blue-100 text-blue-700"
+                    : activeTab === "riders"
+                    ? "bg-green-100 text-green-700"
+                    : "bg-purple-100 text-purple-700"
+                }`}
+              >
+                <FiPlus size={20} />
+              </div>
+              Add Funds
+            </h2>
+
             <form
-              onSubmit={handleRemoveFunds}
-              className="w-full mb-8 bg-white/90 p-4 sm:p-6 md:p-8 rounded-2xl shadow-sm border border-gray-100 flex flex-col md:flex-row md:items-end gap-4 sm:gap-6 md:gap-8"
+              onSubmit={handleSubmit}
+              className="flex flex-col md:flex-row gap-4 overflow-visible"
             >
-              <div className="flex-1 min-w-[220px] relative">
-                <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
-                  <span className="inline-block bg-blue-100 text-blue-700 rounded-full p-1">
-                    <IoWalletOutline size={16} />
-                  </span>
-                  Search User by Email
+              {/* Search Input */}
+              <div className="flex-1 min-w-[240px] relative">
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Search by Email
                 </label>
                 <input
                   type="text"
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 sm:px-4 sm:py-3 focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
+                  className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-blue-400 transition"
                   value={userSearch}
                   onChange={handleUserSearch}
-                  placeholder="Type email..."
+                  placeholder={`Search ${activeTab}...`}
                   autoComplete="off"
                   required
                   disabled={loading}
                 />
                 {userResults.length > 0 && !selectedUser && (
-                  <div className="absolute left-0 right-0 bg-white border border-gray-200 rounded-lg shadow z-10 max-h-40 overflow-y-auto mt-1">
-                    {userResults.map((user) => (
+                  <div className="relative left-0 right-0 bg-white border border-gray-200 rounded-xl shadow-lg z-[999999] max-h-60 overflow-y-auto mt-2">
+                    {userResults.map((item) => (
                       <div
-                        key={user._id}
-                        className="px-3 py-2 cursor-pointer hover:bg-blue-50 text-sm"
-                        onClick={() => handleSelectUser(user)}
+                        key={item._id}
+                        className="px-4 py-3 cursor-pointer hover:bg-blue-50 text-sm border-b border-gray-100 last:border-0 transition"
+                        onClick={() => handleSelectUser(item)}
                       >
-                        {user.email}{" "}
-                        <span className="text-gray-400">({user.fullName})</span>
+                        <div className="font-medium text-gray-800">
+                          {getDisplayName(item)}
+                        </div>
+                        <div className="text-xs text-gray-500 mt-1">
+                          {item.email}
+                        </div>
                       </div>
                     ))}
                   </div>
                 )}
                 {selectedUser && (
-                  <div className="text-xs text-gray-500 mt-1">
-                    Selected: {selectedUser.fullName} ({selectedUser.email})
-                    <br />
-                    Current Balance: ₦
-                    {selectedUser.availableBal?.toLocaleString?.() ?? 0}
+                  <div className="mt-2 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                    <div className="text-sm font-medium text-gray-800">
+                      {getDisplayName(selectedUser)}
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      {selectedUser.email}
+                    </div>
+                    <div className="text-sm font-bold text-blue-600 mt-1">
+                      Current Balance: ₦
+                      {selectedUser.availableBal?.toLocaleString?.() ?? 0}
+                    </div>
                   </div>
                 )}
               </div>
-              <div className="flex-1 min-w-[120px]">
-                <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
-                  <span className="inline-block bg-purple-100 text-purple-700 rounded-full p-1">
-                    ₦
-                  </span>
-                  Amount
+
+              {/* Amount Input */}
+              <div className="flex-1 min-w-[180px]">
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Amount (₦)
                 </label>
                 <input
                   type="number"
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 sm:px-4 sm:py-3 focus:outline-none focus:ring-2 focus:ring-purple-400 transition"
+                  className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-purple-400 transition"
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
                   min="1"
                   required
                   placeholder="Enter amount"
+                  disabled={loading}
                 />
-                {message && (
-                  <div
-                    className={`w-full text-center text-sm font-semibold rounded-lg px-4 py-2 mt-2
-                      ${
-                        message.startsWith("Error")
-                          ? "bg-red-50 text-red-600 border border-red-200"
-                          : "bg-green-50 text-green-700 border border-green-200"
-                      }
-                    `}
-                  >
-                    {message}
+              </div>
+
+              {/* Submit Button */}
+              <div className="flex items-end">
+                <button
+                  type="submit"
+                  className={`px-8 py-3 rounded-xl font-bold text-white shadow-lg transition-all flex items-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed whitespace-nowrap ${
+                    activeTab === "users"
+                      ? "bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800"
+                      : activeTab === "riders"
+                      ? "bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800"
+                      : "bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800"
+                  }`}
+                  disabled={loading}
+                >
+                  {loading ? (
+                    <>
+                      <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                      Adding...
+                    </>
+                  ) : (
+                    <>
+                      <FiPlus size={18} />
+                      Add Funds
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+
+          {/* Remove Funds Section */}
+          <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-sm border border-gray-100 p-6 mb-6 overflow-visible">
+            <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+              <div className="p-2 rounded-xl bg-red-100 text-red-700">
+                <FiMinus size={20} />
+              </div>
+              Remove Funds
+            </h2>
+
+            <form
+              onSubmit={handleRemoveFunds}
+              className="flex flex-col md:flex-row gap-4 overflow-visible"
+            >
+              {/* Search Input */}
+              <div className="flex-1 min-w-[240px] relative">
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Search by Email
+                </label>
+                <input
+                  type="text"
+                  className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-blue-400 transition"
+                  value={userSearch}
+                  onChange={handleUserSearch}
+                  placeholder={`Search ${activeTab}...`}
+                  autoComplete="off"
+                  required
+                  disabled={loading}
+                />
+                {userResults.length > 0 && !selectedUser && (
+                  <div className="relative left-0 right-0 bg-white border border-gray-200 rounded-xl shadow-lg z-[9999] max-h-60 overflow-y-auto mt-2">
+                    {userResults.map((item) => (
+                      <div
+                        key={item._id}
+                        className="px-4 py-3 cursor-pointer hover:bg-blue-50 text-sm border-b border-gray-100 last:border-0 transition"
+                        onClick={() => handleSelectUser(item)}
+                      >
+                        <div className="font-medium text-gray-800">
+                          {getDisplayName(item)}
+                        </div>
+                        <div className="text-xs text-gray-500 mt-1">
+                          {item.email}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {selectedUser && (
+                  <div className="mt-2 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                    <div className="text-sm font-medium text-gray-800">
+                      {getDisplayName(selectedUser)}
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      {selectedUser.email}
+                    </div>
+                    <div className="text-sm font-bold text-blue-600 mt-1">
+                      Current Balance: ₦
+                      {selectedUser.availableBal?.toLocaleString?.() ?? 0}
+                    </div>
                   </div>
                 )}
               </div>
-              <button
-                type="submit"
-                className="bg-gradient-to-r from-red-600 to-red-800 text-white py-2 px-6 sm:py-3 sm:px-8 rounded-xl font-bold text-base shadow-lg hover:from-red-700 hover:to-red-900 transition-all flex items-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed h-fit w-full md:w-fit"
-                disabled={loading || !selectedUser}
-              >
-                {loading ? (
-                  <>
-                    <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-                    Removing...
-                  </>
-                ) : (
-                  <>
-                    <IoWalletOutline size={20} />
-                    Remove Funds
-                  </>
-                )}
-              </button>
+
+              {/* Amount Input */}
+              <div className="flex-1 min-w-[180px]">
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Amount (₦)
+                </label>
+                <input
+                  type="number"
+                  className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-purple-400 transition"
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                  min="1"
+                  required
+                  placeholder="Enter amount"
+                  disabled={loading}
+                />
+              </div>
+
+              {/* Submit Button */}
+              <div className="flex items-end">
+                <button
+                  type="submit"
+                  className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 px-8 py-3 rounded-xl font-bold text-white shadow-lg transition-all flex items-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed whitespace-nowrap"
+                  disabled={loading || !selectedUser}
+                >
+                  {loading ? (
+                    <>
+                      <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                      Removing...
+                    </>
+                  ) : (
+                    <>
+                      <FiMinus size={18} />
+                      Remove Funds
+                    </>
+                  )}
+                </button>
+              </div>
             </form>
           </div>
-          <h2 className="font-bold text-lg text-gray-900 flex items-center gap-2 mb-3">
-            <div className="w-1 h-5 bg-gray-500 rounded-full" />
-            All Users & Balances
-          </h2>
-          <div className="flex justify-between items-center mb-4">
-            <div className="flex gap-2">
+
+          {/* Message Display */}
+          {message && (
+            <div
+              className={`mb-6 p-4 rounded-xl font-semibold text-center transition-all ${
+                message.startsWith("Error")
+                  ? "bg-red-50 text-red-700 border-2 border-red-200"
+                  : "bg-green-50 text-green-700 border-2 border-green-200"
+              }`}
+            >
+              {message}
+            </div>
+          )}
+
+          {/* Data Table */}
+          <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <div className="p-6 border-b border-gray-100 flex justify-between items-center">
+              <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+                <div
+                  className={`w-1 h-6 rounded-full ${
+                    activeTab === "users"
+                      ? "bg-blue-600"
+                      : activeTab === "riders"
+                      ? "bg-green-600"
+                      : "bg-purple-600"
+                  }`}
+                />
+                All {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} &
+                Balances
+              </h2>
               <button
                 onClick={() => window.location.reload()}
-                className="ml-2 px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 transition"
+                className="px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg font-semibold hover:from-blue-700 hover:to-blue-800 transition-all shadow"
               >
                 Refresh
               </button>
             </div>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="min-w-full">
-              <thead className="bg-gradient-to-r from-gray-50 to-slate-50">
-                <tr>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
-                    Name
-                  </th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
-                    Email
-                  </th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
-                    University
-                  </th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
-                    Balance (₦)
-                  </th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-100">
-                {allUsers?.length > 0 ? (
-                  allUsers.map((user) => (
-                    <tr
-                      key={user._id}
-                      className="hover:bg-gray-50 transition-colors"
-                    >
-                      <td className="px-6 py-4 text-sm font-medium text-gray-900">
-                        {user.fullName}
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-600 whitespace-nowrap">
-                        {user.email}
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-600">
-                        {user.university}
-                      </td>
-                      <td className="px-6 py-4 text-sm font-bold text-blue-700">
-                        ₦{user.availableBal?.toLocaleString()}
-                      </td>
-                      <td className="px-6 py-4 text-sm">
-                        <button
-                          className="bg-red-100 text-red-700 px-4 py-2 rounded-lg font-semibold hover:bg-red-200 transition disabled:opacity-60 disabled:cursor-not-allowed"
-                          onClick={async () => {
-                            if (
-                              window.confirm(
-                                `Are you sure you want to delete ${user.fullName}?`
-                              )
-                            ) {
-                              try {
-                                await axios.delete(
-                                  `${
-                                    import.meta.env.VITE_REACT_APP_API
-                                  }/api/users/delete-user/${user._id}`
-                                );
-                                setMessage(
-                                  `User ${user.fullName} deleted successfully.`
-                                );
-                                // Optionally, refresh user list here
-                              } catch (err) {
-                                setMessage(
-                                  "Error: " +
-                                    (err.response?.data?.message || err.message)
-                                );
-                              }
-                            }
-                          }}
+
+            <div className="overflow-x-auto">
+              <table className="min-w-full">
+                <thead className="bg-gradient-to-r from-gray-50 to-slate-50">
+                  <tr>
+                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                      {activeTab === "users"
+                        ? "Name"
+                        : activeTab === "riders"
+                        ? "Rider Name"
+                        : "Store Name"}
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                      Email
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                      University
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                      Balance (₦)
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-100">
+                  {getCurrentData()?.length > 0 ? (
+                    getCurrentData().map((item) => (
+                      <tr
+                        key={item._id}
+                        className="hover:bg-gray-50 transition-colors"
+                      >
+                        <td className="px-6 py-4 text-sm font-medium text-gray-900">
+                          {getDisplayName(item)}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-600 whitespace-nowrap">
+                          {item.email}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-600">
+                          {item.university || "N/A"}
+                        </td>
+                        <td
+                          className={`px-6 py-4 text-sm font-bold ${
+                            activeTab === "users"
+                              ? "text-blue-700"
+                              : activeTab === "riders"
+                              ? "text-green-700"
+                              : "text-purple-700"
+                          }`}
                         >
-                          Delete
-                        </button>
+                          ₦{item.availableBal?.toLocaleString() ?? 0}
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan="4" className="px-6 py-12 text-center">
+                        <div className="flex flex-col items-center gap-3">
+                          <span className="text-gray-300 text-5xl">
+                            {activeTab === "users"
+                              ? "👥"
+                              : activeTab === "riders"
+                              ? "🚴"
+                              : "🏪"}
+                          </span>
+                          <p className="text-gray-500 font-semibold text-lg">
+                            No {activeTab} found
+                          </p>
+                          <p className="text-sm text-gray-400">
+                            {activeTab.charAt(0).toUpperCase() +
+                              activeTab.slice(1)}{" "}
+                            will appear here once registered
+                          </p>
+                        </div>
                       </td>
                     </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan="4" className="px-6 py-12 text-center">
-                      <div className="flex flex-col items-center gap-2">
-                        <span className="text-gray-300 text-3xl">💳</span>
-                        <p className="text-gray-500 font-medium">
-                          No users found
-                        </p>
-                        <p className="text-sm text-gray-400">
-                          Users will appear here once registered
-                        </p>
-                      </div>
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       </div>
