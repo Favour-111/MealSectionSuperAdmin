@@ -33,7 +33,7 @@ const Home = () => {
         (order) =>
           Array.isArray(order.packs) &&
           order.packs.length > 0 &&
-          order.packs.every((pack) => pack.accepted === true)
+          order.packs.every((pack) => pack.accepted === true),
       )
     : [];
   const now = new Date();
@@ -74,20 +74,20 @@ const Home = () => {
   });
   const totalServiceFee = filteredOrders.reduce(
     (sum, o) => sum + (o.serviceFee || 0),
-    0
+    0,
   );
   const totalDeliveryFee = filteredOrders.reduce(
     (sum, o) => sum + (o.deliveryFee || 0),
-    0
+    0,
   );
   const totalRiderFee = filteredOrders.reduce(
     (sum, o) => sum + (o.deliveryFee || 0) * 0.5,
-    0
+    0,
   );
   // Vendor fee is the subtotal
   const totalVendorFee = filteredOrders.reduce(
     (sum, o) => sum + (o.subtotal || 0),
-    0
+    0,
   );
   const totalFee =
     totalServiceFee + totalRiderFee + totalRiderFee + totalVendorFee;
@@ -98,8 +98,6 @@ const Home = () => {
       ? allUsers.reduce((sum, user) => sum + (user.availableBal || 0), 0)
       : 0;
   const [openNav, setOpenNav] = useState(false);
-
-  console.log(allOrder);
 
   // Apply university filter to status groups
   const success = allOrder.filter((item) => {

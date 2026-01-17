@@ -18,7 +18,7 @@ export const AppProvider = ({ children }) => {
   const handleFetch = async () => {
     try {
       const { data } = await axios.get(
-        `${import.meta.env.VITE_REACT_APP_API}/api/universities`
+        `${import.meta.env.VITE_REACT_APP_API}/api/universities`,
       );
       if (data) {
         setUniversities(data.universities);
@@ -33,7 +33,7 @@ export const AppProvider = ({ children }) => {
   const fetchOrders = async () => {
     try {
       const response = await axios.get(
-        `${import.meta.env.VITE_REACT_APP_API}/api/users/orders`
+        `${import.meta.env.VITE_REACT_APP_API}/api/users/orders/admin/all`,
       );
 
       if (response && response.data.orders) {
@@ -53,7 +53,7 @@ export const AppProvider = ({ children }) => {
   const fetchUsers = async () => {
     try {
       const response = await axios.get(
-        `${import.meta.env.VITE_REACT_APP_API}/api/users/allUser`
+        `${import.meta.env.VITE_REACT_APP_API}/api/users/allUser`,
       );
 
       if (response && response.data.message) {
@@ -71,7 +71,7 @@ export const AppProvider = ({ children }) => {
   const fetchVendors = async () => {
     try {
       const response = await axios.get(
-        `${import.meta.env.VITE_REACT_APP_API}/api/vendors/all`
+        `${import.meta.env.VITE_REACT_APP_API}/api/vendors/all`,
       );
 
       if (response && response.data) {
@@ -89,7 +89,7 @@ export const AppProvider = ({ children }) => {
   const fetchRiders = async () => {
     try {
       const response = await axios.get(
-        `${import.meta.env.VITE_REACT_APP_API}/api/riders/allRiders`
+        `${import.meta.env.VITE_REACT_APP_API}/api/riders/allRiders`,
       );
 
       if (response && response.data) {
