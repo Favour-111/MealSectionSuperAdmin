@@ -43,13 +43,13 @@ const WithDraw = () => {
         // Helper to get university by id
         const getRiderUniversity = (riderId) => {
           const rider = (allRidersRes.data || []).find(
-            (r) => r._id === riderId
+            (r) => r._id === riderId,
           );
           return rider?.university || "N/A";
         };
         const getVendorUniversity = (vendorId) => {
           const vendor = (allVendorsRes.data || []).find(
-            (v) => v._id === vendorId
+            (v) => v._id === vendorId,
           );
           return vendor?.university || "N/A";
         };
@@ -63,6 +63,7 @@ const WithDraw = () => {
           status: r.status, // could be true, false, or null
           date: new Date(r.date || r.createdAt).toLocaleDateString(),
           type: "rider",
+          riderId: r.riderId,
           university: getRiderUniversity(r.riderId),
         }));
 
@@ -97,11 +98,29 @@ const WithDraw = () => {
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [detailsData, setDetailsData] = useState(null);
 
-  // Fetch vendor bank info and show modal
-  const handleShowDetails = async (vendorId, amount) => {
+  // Fetch bank info for vendor/rider and show modal
+  const handleShowDetails = async (id, amount, type) => {
     try {
-      const res = await axios.get(`${API}/api/vendors/${vendorId}/bank-info`);
-      setDetailsData({ ...res.data, amount });
+      if (type === "vendor") {
+        const res = await axios.get(`${API}/api/vendors/${id}/bank-info`);
+        setDetailsData({ ...res.data, amount, role: "Vendor" });
+      } else {
+        const rider = riders.find((r) => r._id === id);
+        if (!rider) {
+          toast.error("Rider not found");
+          return;
+        }
+
+        setDetailsData({
+          bankAccountName: rider.accountName || "N/A",
+          bankAccountNumber: rider.accountNumber || "N/A",
+          bankName: rider.bank || "N/A",
+          amount,
+          role: "Rider",
+          initiator: rider.userName || rider.userName || "Unknown Rider",
+        });
+      }
+
       setShowDetailsModal(true);
     } catch (err) {
       toast.error("Failed to fetch bank info");
@@ -124,7 +143,7 @@ const WithDraw = () => {
 
       // Update UI instantly
       setWithdrawals((prev) =>
-        prev.map((w) => (w._id === id ? { ...w, status: statusValue } : w))
+        prev.map((w) => (w._id === id ? { ...w, status: statusValue } : w)),
       );
 
       const item = withdrawals.find((w) => w._id === id);
@@ -164,30 +183,30 @@ const WithDraw = () => {
   const pendingTotalPages = Math.ceil(pendingWithdrawals.length / itemsPerPage);
   const paginatedPending = pendingWithdrawals.slice(
     (pendingPage - 1) * itemsPerPage,
-    pendingPage * itemsPerPage
+    pendingPage * itemsPerPage,
   );
 
   // Pagination for transaction history
   const historyTotalPages = Math.ceil(
-    completedOrRejected.length / itemsPerPage
+    completedOrRejected.length / itemsPerPage,
   );
   const paginatedHistory = completedOrRejected.slice(
     (historyPage - 1) * itemsPerPage,
-    historyPage * itemsPerPage
+    historyPage * itemsPerPage,
   );
 
   // Calculate summary stats
   const summaryStats = useMemo(() => {
     const totalAmount = withdrawals.reduce(
       (sum, w) => sum + (w.amount || 0),
-      0
+      0,
     );
     const completedAmount = withdrawals
       .filter((w) => w.status === true)
       .reduce((sum, w) => sum + (w.amount || 0), 0);
     const pendingAmount = pendingWithdrawals.reduce(
       (sum, w) => sum + (w.amount || 0),
-      0
+      0,
     );
     const rejectedAmount = withdrawals
       .filter((w) => w.status === false)
@@ -411,32 +430,54 @@ const WithDraw = () => {
                           </td>
                           <td className="px-6 py-4">
                             <div className="flex gap-2">
-                              {item.role === "Vendor" && (
+                              {(item.role === "Vendor" ||
+                                item.role === "Rider") && (
                                 <button
                                   onClick={() => {
-                                    let vendorId;
-                                    if (
-                                      item.vendorId &&
-                                      typeof item.vendorId === "object" &&
-                                      item.vendorId._id
-                                    ) {
-                                      vendorId = item.vendorId._id;
-                                    } else if (item.vendorId) {
-                                      vendorId = item.vendorId;
-                                    } else if (item.vendorName) {
-                                      // fallback: try to find vendor by name
-                                      const found = vendors.find(
-                                        (v) => v.storeName === item.vendorName
+                                    if (item.role === "Vendor") {
+                                      let vendorId;
+                                      if (
+                                        item.vendorId &&
+                                        typeof item.vendorId === "object" &&
+                                        item.vendorId._id
+                                      ) {
+                                        vendorId = item.vendorId._id;
+                                      } else if (item.vendorId) {
+                                        vendorId = item.vendorId;
+                                      } else if (item.vendorName) {
+                                        const found = vendors.find(
+                                          (v) =>
+                                            v.storeName === item.vendorName,
+                                        );
+                                        vendorId = found
+                                          ? found._id
+                                          : undefined;
+                                      }
+
+                                      if (!vendorId) {
+                                        toast.error(
+                                          "Vendor ID not found for this withdrawal.",
+                                        );
+                                        return;
+                                      }
+                                      handleShowDetails(
+                                        vendorId,
+                                        item.amount,
+                                        "vendor",
                                       );
-                                      vendorId = found ? found._id : undefined;
-                                    }
-                                    if (!vendorId) {
-                                      toast.error(
-                                        "Vendor ID not found for this withdrawal."
+                                    } else {
+                                      if (!item.riderId) {
+                                        toast.error(
+                                          "Rider ID not found for this withdrawal.",
+                                        );
+                                        return;
+                                      }
+                                      handleShowDetails(
+                                        item.riderId,
+                                        item.amount,
+                                        "rider",
                                       );
-                                      return;
                                     }
-                                    handleShowDetails(vendorId, item.amount);
                                   }}
                                   className="px-4 py-1.5 rounded-lg bg-blue-100 text-blue-700 text-xs font-medium border border-blue-200 hover:bg-blue-200 transition-colors"
                                 >
@@ -448,7 +489,7 @@ const WithDraw = () => {
                                   handleStatusUpdate(
                                     item._id,
                                     "Completed",
-                                    item.type
+                                    item.type,
                                   )
                                 }
                                 disabled={Boolean(actionLoading[item._id])}
@@ -491,7 +532,7 @@ const WithDraw = () => {
                                   handleStatusUpdate(
                                     item._id,
                                     "Rejected",
-                                    item.type
+                                    item.type,
                                   )
                                 }
                                 disabled={Boolean(actionLoading[item._id])}
@@ -563,7 +604,7 @@ const WithDraw = () => {
                                   <span className="text-gray-800 break-words truncate min-w-0">
                                     ₦
                                     {Number(
-                                      detailsData.amount
+                                      detailsData.amount,
                                     ).toLocaleString()}
                                   </span>
                                 </div>
@@ -591,7 +632,7 @@ const WithDraw = () => {
                     Showing {(pendingPage - 1) * itemsPerPage + 1} to{" "}
                     {Math.min(
                       pendingPage * itemsPerPage,
-                      pendingWithdrawals.length
+                      pendingWithdrawals.length,
                     )}{" "}
                     of {pendingWithdrawals.length} pending withdrawals
                   </p>
@@ -623,7 +664,7 @@ const WithDraw = () => {
                     <button
                       onClick={() =>
                         setPendingPage((prev) =>
-                          Math.min(prev + 1, pendingTotalPages)
+                          Math.min(prev + 1, pendingTotalPages),
                         )
                       }
                       disabled={pendingPage === pendingTotalPages}
@@ -755,7 +796,7 @@ const WithDraw = () => {
                     Showing {(historyPage - 1) * itemsPerPage + 1} to{" "}
                     {Math.min(
                       historyPage * itemsPerPage,
-                      completedOrRejected.length
+                      completedOrRejected.length,
                     )}{" "}
                     of {completedOrRejected.length} transactions
                   </p>
@@ -787,7 +828,7 @@ const WithDraw = () => {
                     <button
                       onClick={() =>
                         setHistoryPage((prev) =>
-                          Math.min(prev + 1, historyTotalPages)
+                          Math.min(prev + 1, historyTotalPages),
                         )
                       }
                       disabled={historyPage === historyTotalPages}
