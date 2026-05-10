@@ -1,5 +1,6 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import SideBar from "../../components/SideBar/SideBar";
+import axios from "axios";
 import {
   IoBagCheck,
   IoCheckmark,
@@ -16,81 +17,96 @@ import LineChart from "../../components/LineChart/LineChart";
 import BarChart from "../../components/BarChat/BarChart";
 import { useAppContext } from "../../components/AppContext";
 import "./Home.css";
+
+const defaultSummary = {
+  counts: {
+    delivered: 0,
+    pending: 0,
+    cancelled: 0,
+  },
+  feeSummary: {
+    totalServiceFee: 0,
+    totalDeliveryFee: 0,
+    totalCompanyFee: 0,
+    totalRiderFee: 0,
+    totalVendorFee: 0,
+    totalFee: 0,
+  },
+  charts: {
+    monthlyRevenue: Array(12).fill(0),
+    weeklyOrders: Array(7).fill(0),
+  },
+};
+
 const Home = () => {
-  const { Universities, allOrder, allUsers } = useAppContext();
+  const { Universities, allUsers } = useAppContext();
   const [showAddBalance, setShowAddBalance] = useState(false);
   // Lazy load AddBalance page
   const AddBalance = React.lazy(() => import("./AddBalance"));
   const [selectedUniversity, setSelectedUniversity] = useState("All");
   const [feePeriod, setFeePeriod] = useState("daily");
   const [selectedDate, setSelectedDate] = useState("");
-  // const { Universities, allOrder } = useAppContext();
-  // Only sum accepted orders
-  // Fee summary matches 'success' logic: only currentStatus === 'Delivered'
-  // Only sum orders where all packs are accepted
-  const acceptedOrders = allOrder
-    ? allOrder.filter(
-        (order) =>
-          Array.isArray(order.packs) &&
-          order.packs.length > 0 &&
-          order.packs.every((pack) => pack.accepted === true),
-      )
-    : [];
+  const [summary, setSummary] = useState(defaultSummary);
+  const [summaryLoading, setSummaryLoading] = useState(true);
   const now = new Date();
-  console.log(allOrder);
 
-  const filteredOrders = acceptedOrders.filter((order) => {
-    // University filter
-    if (selectedUniversity !== "All") {
-      // Find vendor for this order
-      const vendor =
-        order.vendorName || (order.packs && order.packs[0]?.vendorName);
-      // Find university for this vendor
-      const vendorObj =
-        vendor && Universities.find((u) => u.name === order.university);
-      if (!vendorObj || vendorObj.name !== selectedUniversity) return false;
-    }
-    const orderDate = new Date(order.createdAt);
-    if (selectedDate) {
-      // If a date is selected, filter by that date
-      const selected = new Date(selectedDate);
-      return (
-        orderDate.getDate() === selected.getDate() &&
-        orderDate.getMonth() === selected.getMonth() &&
-        orderDate.getFullYear() === selected.getFullYear()
-      );
-    }
-    if (feePeriod === "daily") {
-      return orderDate.toDateString() === now.toDateString();
-    } else if (feePeriod === "monthly") {
-      return (
-        orderDate.getMonth() === now.getMonth() &&
-        orderDate.getFullYear() === now.getFullYear()
-      );
-    } else if (feePeriod === "yearly") {
-      return orderDate.getFullYear() === now.getFullYear();
-    }
-    return true;
-  });
-  const totalServiceFee = filteredOrders.reduce(
-    (sum, o) => sum + (o.serviceFee || 0),
-    0,
-  );
-  const totalDeliveryFee = filteredOrders.reduce(
-    (sum, o) => sum + (o.deliveryFee || 0),
-    0,
-  );
-  const totalRiderFee = filteredOrders.reduce(
-    (sum, o) => sum + (o.deliveryFee || 0) * 0.5,
-    0,
-  );
-  // Vendor fee is the subtotal
-  const totalVendorFee = filteredOrders.reduce(
-    (sum, o) => sum + (o.subtotal || 0),
-    0,
-  );
-  const totalFee =
-    totalServiceFee + totalRiderFee + totalRiderFee + totalVendorFee;
+  useEffect(() => {
+    let cancelled = false;
+
+    const fetchSummary = async () => {
+      setSummaryLoading(true);
+      try {
+        const { data } = await axios.get(
+          `${import.meta.env.VITE_REACT_APP_API}/api/users/orders/admin/summary`,
+          {
+            params: {
+              university: selectedUniversity,
+              period: feePeriod,
+              date: selectedDate,
+            },
+          },
+        );
+
+        if (!cancelled) {
+          setSummary({
+            ...defaultSummary,
+            ...data,
+            counts: { ...defaultSummary.counts, ...(data?.counts || {}) },
+            feeSummary: {
+              ...defaultSummary.feeSummary,
+              ...(data?.feeSummary || {}),
+            },
+            charts: {
+              ...defaultSummary.charts,
+              ...(data?.charts || {}),
+            },
+          });
+        }
+      } catch (error) {
+        console.error("Error fetching admin summary:", error);
+        if (!cancelled) {
+          setSummary(defaultSummary);
+        }
+      } finally {
+        if (!cancelled) {
+          setSummaryLoading(false);
+        }
+      }
+    };
+
+    fetchSummary();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [feePeriod, selectedDate, selectedUniversity]);
+
+  const totalServiceFee = summary.feeSummary.totalServiceFee || 0;
+  const totalDeliveryFee = summary.feeSummary.totalDeliveryFee || 0;
+  const totalCompanyFee = summary.feeSummary.totalCompanyFee || 0;
+  const totalRiderFee = summary.feeSummary.totalRiderFee || 0;
+  const totalVendorFee = summary.feeSummary.totalVendorFee || 0;
+  const totalFee = summary.feeSummary.totalFee || 0;
 
   // Calculate total user balance
   const totalUserBalance =
@@ -98,41 +114,9 @@ const Home = () => {
       ? allUsers.reduce((sum, user) => sum + (user.availableBal || 0), 0)
       : 0;
   const [openNav, setOpenNav] = useState(false);
-
-  // Apply university filter to status groups
-  const success = allOrder.filter((item) => {
-    if (item.currentStatus !== "Delivered") return false;
-    if (selectedUniversity !== "All") {
-      const vendor =
-        item.vendorName || (item.packs && item.packs[0]?.vendorName);
-      const vendorObj =
-        vendor && Universities.find((u) => u.name === item.university);
-      if (!vendorObj || vendorObj.name !== selectedUniversity) return false;
-    }
-    return true;
-  });
-  const pending = allOrder.filter((item) => {
-    if (item.currentStatus !== "Pending") return false;
-    if (selectedUniversity !== "All") {
-      const vendor =
-        item.vendorName || (item.packs && item.packs[0]?.vendorName);
-      const vendorObj =
-        vendor && Universities.find((u) => u.name === item.university);
-      if (!vendorObj || vendorObj.name !== selectedUniversity) return false;
-    }
-    return true;
-  });
-  const cancelled = allOrder.filter((item) => {
-    if (item.currentStatus !== "Cancelled") return false;
-    if (selectedUniversity !== "All") {
-      const vendor =
-        item.vendorName || (item.packs && item.packs[0]?.vendorName);
-      const vendorObj =
-        vendor && Universities.find((u) => u.name === item.university);
-      if (!vendorObj || vendorObj.name !== selectedUniversity) return false;
-    }
-    return true;
-  });
+  const successCount = summary.counts.delivered || 0;
+  const pendingCount = summary.counts.pending || 0;
+  const cancelledCount = summary.counts.cancelled || 0;
 
   return (
     <div className="flex w-[100%] justify-between min-h-screen bg-gradient-to-br from-slate-50 via-white to-purple-50/30">
@@ -194,7 +178,9 @@ const Home = () => {
                     <IoCheckmark size={20} className="text-white" />
                   </div>
                 </div>
-                <p className="text-3xl font-bold">{success.length}</p>
+                <p className="text-3xl font-bold">
+                  {summaryLoading ? "..." : successCount}
+                </p>
                 <p className="text-xs text-white/80 mt-1">Delivered</p>
               </div>
             </div>
@@ -212,7 +198,9 @@ const Home = () => {
                     />
                   </div>
                 </div>
-                <p className="text-3xl font-bold">{pending.length}</p>
+                <p className="text-3xl font-bold">
+                  {summaryLoading ? "..." : pendingCount}
+                </p>
                 <p className="text-xs text-white/80 mt-1">In Progress</p>
               </div>
             </div>
@@ -227,7 +215,9 @@ const Home = () => {
                     <IoClose size={20} className="text-white" />
                   </div>
                 </div>
-                <p className="text-3xl font-bold">{cancelled.length}</p>
+                <p className="text-3xl font-bold">
+                  {summaryLoading ? "..." : cancelledCount}
+                </p>
                 <p className="text-xs text-white/80 mt-1">Declined</p>
               </div>
             </div>
@@ -312,7 +302,7 @@ const Home = () => {
                 Total Company Fee
               </span>
               <span className="text-sm font-bold text-green-900">
-                ₦{totalRiderFee.toLocaleString()}
+                ₦{totalCompanyFee.toLocaleString()}
               </span>
             </div>
             <div className="p-2 rounded-lg border border-amber-200 bg-amber-50 flex flex-col items-center justify-center">
@@ -382,7 +372,7 @@ const Home = () => {
                 Total Revenue
               </h2>
               <div>
-                <LineChart />
+                <LineChart monthlyValues={summary.charts.monthlyRevenue} />
               </div>
             </div>
             <div className="bg-white/80 backdrop-blur-sm border border-gray-100 rounded-2xl p-5 shadow-sm hover:shadow-md transition-all">
@@ -390,7 +380,7 @@ const Home = () => {
                 Customer Map Weekly
               </h2>
               <div>
-                <BarChart />
+                <BarChart chartValues={summary.charts.weeklyOrders} />
               </div>
             </div>
           </div>

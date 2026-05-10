@@ -22,7 +22,11 @@ ChartJS.register(
 
 const dayLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
-const BarChart = ({ filteredOrders = [], title = "Weekly Overview" }) => {
+const BarChart = ({
+  filteredOrders = [],
+  chartValues,
+  title = "Weekly Overview",
+}) => {
   const chartRef = useRef(null);
 
   // Normalize title to a safe renderable string (avoid passing objects)
@@ -41,6 +45,13 @@ const BarChart = ({ filteredOrders = [], title = "Weekly Overview" }) => {
 
   // Derive weekly counts from filteredOrders if provided
   const { labels, values } = useMemo(() => {
+    if (Array.isArray(chartValues) && chartValues.length === 7) {
+      return {
+        labels: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+        values: chartValues,
+      };
+    }
+
     if (!Array.isArray(filteredOrders) || filteredOrders.length === 0) {
       return {
         labels: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
@@ -56,7 +67,7 @@ const BarChart = ({ filteredOrders = [], title = "Weekly Overview" }) => {
     });
     const ordered = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
     return { labels: ordered, values: ordered.map((k) => counts[k] || 0) };
-  }, [filteredOrders]);
+  }, [chartValues, filteredOrders]);
 
   const gradientBg = (context) => {
     const chart = context.chart || chartRef.current;

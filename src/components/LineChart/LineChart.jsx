@@ -39,7 +39,11 @@ const monthLabels = [
   "Dec",
 ];
 
-const LineChart = ({ filteredOrders, title = "Total Revenue" }) => {
+const LineChart = ({
+  filteredOrders,
+  monthlyValues,
+  title = "Total Revenue",
+}) => {
   // Fallback to context if prop not supplied
   const { allOrder } = useAppContext();
   const orders = Array.isArray(filteredOrders) ? filteredOrders : allOrder;
@@ -47,6 +51,10 @@ const LineChart = ({ filteredOrders, title = "Total Revenue" }) => {
 
   // Helper: group orders by month and sum their total values
   const monthlyData = useMemo(() => {
+    if (Array.isArray(monthlyValues) && monthlyValues.length === 12) {
+      return monthlyValues;
+    }
+
     const monthlyTotals = Array(12).fill(0);
     orders?.forEach((order) => {
       const created = order?.createdAt ? new Date(order.createdAt) : null;
@@ -59,7 +67,7 @@ const LineChart = ({ filteredOrders, title = "Total Revenue" }) => {
       monthlyTotals[monthIndex] += total;
     });
     return monthlyTotals;
-  }, [orders]);
+  }, [monthlyValues, orders]);
 
   const gradientFill = (context) => {
     const chart = context.chart || chartRef.current;

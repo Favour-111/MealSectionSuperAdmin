@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import SideBar from "../../components/SideBar/SideBar";
 import { IoMenu } from "react-icons/io5";
 import { SlBell } from "react-icons/sl";
@@ -19,8 +19,21 @@ const Universities = () => {
   const [openNav, setOpenNav] = useState(false);
   const [selectedRider, setSelectedRider] = useState(null);
   const [selectedUniversity, setSelectedUniversity] = useState("");
-  const { Universities, allOrder, allUsers, vendors, riders, isLoading } =
-    useAppContext();
+  const {
+    Universities,
+    allOrder,
+    allUsers,
+    vendors,
+    riders,
+    isLoading,
+    ordersLoading,
+    fetchOrders,
+  } = useAppContext();
+  const pageLoading = isLoading || ordersLoading;
+
+  useEffect(() => {
+    fetchOrders();
+  }, [fetchOrders]);
 
   // 🔹 Filter data by selected university
   const filteredOrders = useMemo(() => {
@@ -119,7 +132,7 @@ const Universities = () => {
             </select>
           </div>
           {/* Stats Cards */}
-          {isLoading ? (
+          {pageLoading ? (
             <CardsSkeleton />
           ) : (
             <div className="grid sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
@@ -198,7 +211,7 @@ const Universities = () => {
               </p>
             )}
             <div className="flex items-center gap-4 flex-wrap">
-              {isLoading ? (
+              {pageLoading ? (
                 <ListSkeleton />
               ) : filteredUsers.length > 0 ? (
                 filteredUsers.map((item) => (
@@ -248,7 +261,7 @@ const Universities = () => {
               </p>
             )}
             <div className="flex items-center gap-4 flex-wrap">
-              {isLoading ? (
+              {pageLoading ? (
                 <ListSkeleton />
               ) : filteredVendors.length > 0 ? (
                 filteredVendors.map((item) => (
@@ -301,7 +314,7 @@ const Universities = () => {
               </p>
             )}
             <div className="flex items-center gap-4 flex-wrap">
-              {isLoading ? (
+              {pageLoading ? (
                 <ListSkeleton />
               ) : filteredRiders.length > 0 ? (
                 <>

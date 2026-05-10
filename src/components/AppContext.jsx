@@ -1,4 +1,10 @@
-import React, { createContext, useState, useContext, useEffect } from "react";
+import React, {
+  createContext,
+  useState,
+  useContext,
+  useEffect,
+  useCallback,
+} from "react";
 import toast from "react-hot-toast";
 import axios from "axios";
 // Create context
@@ -10,6 +16,7 @@ export const AppProvider = ({ children }) => {
   const [Universities, setUniversities] = useState([]);
   const [allOrder, setAllOrders] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [ordersLoading, setOrdersLoading] = useState(false);
 
   const [allUsers, setUsers] = useState([]);
   const [riders, setRiders] = useState([]);
@@ -30,16 +37,20 @@ export const AppProvider = ({ children }) => {
       toast.error("Error fetching universities");
     }
   };
-  const fetchOrders = async () => {
+  const fetchOrders = useCallback(async (force = false) => {
+    if (!force && allOrder.length > 0) {
+      return allOrder;
+    }
+
+    setOrdersLoading(true);
     try {
       const response = await axios.get(
         `${import.meta.env.VITE_REACT_APP_API}/api/users/orders/admin/all`,
       );
 
       if (response && response.data.orders) {
-        console.log(response.data.orders);
-
         setAllOrders(response.data.orders);
+        return response.data.orders;
       } else {
         toast.error("Error fetching orders");
       }
@@ -47,9 +58,10 @@ export const AppProvider = ({ children }) => {
       console.error("Error fetching orders:", error);
       toast.error("Something went wrong fetching orders");
     } finally {
-      // noop here; overall isLoading handled in loadAll
+      setOrdersLoading(false);
     }
-  };
+    return [];
+  }, [allOrder]);
   const fetchUsers = async () => {
     try {
       const response = await axios.get(
@@ -114,7 +126,6 @@ export const AppProvider = ({ children }) => {
           fetchUsers(),
           fetchVendors(),
           fetchRiders(),
-          fetchOrders(),
         ]);
       } catch (e) {
         // errors handled in individual fetchers
@@ -135,6 +146,8 @@ export const AppProvider = ({ children }) => {
         riders,
         setUniversities,
         isLoading,
+        ordersLoading,
+        fetchOrders,
       }}
     >
       {children}
